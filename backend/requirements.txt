@@ -1,0 +1,6 @@
+# Backend dependencies — versions to be pinned later
+Django
+djangorestframework
+django-cors-headers
+psycopg2-binary
+python-dotenv

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, CalendarPlus, ListTodo, StickyNote, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +6,20 @@ import { useNavigate } from 'react-router-dom';
 export function FAB() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onOutside(e: MouseEvent | TouchEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onOutside);
+    document.addEventListener('touchstart', onOutside);
+    return () => {
+      document.removeEventListener('mousedown', onOutside);
+      document.removeEventListener('touchstart', onOutside);
+    };
+  }, [open]);
 
   const actions = [
     { icon: CalendarPlus, label: 'Add class', to: '/timetable' },
@@ -14,7 +28,7 @@ export function FAB() {
   ];
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 no-print flex flex-col items-end gap-3">
+    <div ref={ref} className="fixed bottom-6 right-4 sm:right-6 z-40 no-print flex flex-col items-end gap-3">
       <AnimatePresence>
         {open && actions.map((a, i) => (
           <motion.button
@@ -24,8 +38,8 @@ export function FAB() {
             exit={{ opacity: 0, y: 10, scale: 0.8 }}
             transition={{ delay: i * 0.04 }}
             onClick={() => { navigate(a.to); setOpen(false); }}
-            className="glass rounded-full pl-4 pr-2 py-2 flex items-center gap-2 text-sm font-medium shadow-lg"
-            style={{ color: 'var(--ink)' }}
+            className="glass-solid rounded-full pl-4 pr-2 py-2 flex items-center gap-2 text-sm font-medium shadow-lg"
+            style={{ color: 'var(--ink)', background: 'var(--glass-solid)' }}
           >
             {a.label}
             <span className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] text-white">

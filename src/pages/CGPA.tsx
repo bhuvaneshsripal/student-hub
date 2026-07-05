@@ -1,32 +1,81 @@
-import { useMemo, useState } from 'react';
-import { Plus, Trash2, FileDown, GraduationCap } from 'lucide-react';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { useRef, useState } from 'react';
+import { Plus, Trash2, FileDown, GraduationCap, ImagePlus, Loader2, Check } from 'lucide-react';
 import { Card, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { useCgpaStore, semesterGPA, overallCGPA } from '../store/cgpaStore';
 import { useToastStore } from '../store/toastStore';
 import { GRADE_POINTS, type Grade } from '../types';
 import { exportCgpaPdf } from '../utils/pdf';
+import { extractSubjectsFromImage, type ParsedSubject } from '../utils/gradeCardOcr';
 
-const GRADES: Grade[] = ['O', 'A+', 'A', 'B+', 'B', 'C', 'U'];
-const CHART_COLORS = ['#F2C94C', '#FFB800', '#FFE066', '#17B26A', '#F5A623', '#F04438', '#06B6D4'];
+const GRADES: Grade[] = ['S', 'A+', 'A', 'B+', 'B', 'C+', 'C', 'U', 'SA', 'WC'];
 
 export default function CGPA() {
-  const { semesters, addSemester, removeSemester, addSubject, updateSubject, removeSubject } = useCgpaStore();
+  const { semesters, addSemester, removeSemester, addSubject, updateSubject, removeSubject, importSubjects } = useCgpaStore();
   const push = useToastStore((s) => s.push);
   const [newSemName, setNewSemName] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState(0);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [parsedRows, setParsedRows] = useState<ParsedSubject[]>([]);
+  const [importTarget, setImportTarget] = useState<string>('__new__');
+  const [importSemName, setImportSemName] = useState('Imported Semester');
 
   const cgpa = overallCGPA(semesters);
   const totalCredits = semesters.flatMap((s) => s.subjects).reduce((a, s) => a + s.credits, 0);
-  const creditsEarned = semesters.flatMap((s) => s.subjects).filter((s) => s.grade !== 'U').reduce((a, s) => a + s.credits, 0);
+  const creditsEarned = semesters.flatMap((s) => s.subjects).filter((s) => !['U', 'SA', 'WC'].includes(s.grade)).reduce((a, s) => a + s.credits, 0);
 
-  const semesterChartData = useMemo(() => semesters.map((s) => ({ name: s.name.replace('Semester ', 'S'), gpa: Number(semesterGPA(s.subjects).toFixed(2)) })), [semesters]);
+  function handleAddSemester() {
+    addSemester(newSemName.trim() || `Semester ${semesters.length + 1}`);
+    setNewSemName('');
+    push('Semester added', 'success');
+  }
 
-  const gradeDistribution = useMemo(() => {
-    const counts: Record<string, number> = {};
-    semesters.flatMap((s) => s.subjects).forEach((s) => { counts[s.grade] = (counts[s.grade] || 0) + 1; });
-    return GRADES.filter((g) => counts[g]).map((g) => ({ name: g, value: counts[g] }));
-  }, [semesters]);
+  async function handleImageSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setOcrLoading(true);
+    setOcrProgress(0);
+    try {
+      const rows = await extractSubjectsFromImage(file, setOcrProgress);
+      if (rows.length === 0) {
+        push("Couldn't detect any subjects in that image — try a clearer photo", 'error');
+        return;
+      }
+      setParsedRows(rows);
+      setImportTarget('__new__');
+      setImportSemName(`Imported Semester ${semesters.length + 1}`);
+      setReviewOpen(true);
+      push(`Detected ${rows.length} subject(s) — review before adding`, 'success');
+    } catch {
+      push('Could not read that image. Please try again.', 'error');
+    } finally {
+      setOcrLoading(false);
+    }
+  }
+
+  function updateParsedRow(i: number, patch: Partial<ParsedSubject>) {
+    setParsedRows((rows) => rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  }
+
+  function removeParsedRow(i: number) {
+    setParsedRows((rows) => rows.filter((_, idx) => idx !== i));
+  }
+
+  function confirmImport() {
+    if (parsedRows.length === 0) return;
+    if (importTarget === '__new__') {
+      importSubjects({ newSemesterName: importSemName }, parsedRows);
+    } else {
+      importSubjects({ semId: importTarget }, parsedRows);
+    }
+    push(`Added ${parsedRows.length} subject(s) — GPA recalculated`, 'success');
+    setReviewOpen(false);
+    setParsedRows([]);
+  }
 
   return (
     <div className="space-y-5">
@@ -35,7 +84,27 @@ export default function CGPA() {
           <h1 className="font-display text-2xl font-bold" style={{ color: 'var(--ink)' }}>CGPA Calculator</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>Track semester GPA and overall CGPA across unlimited semesters.</p>
         </div>
-        <Button variant="outline" size="sm" icon={<FileDown size={14} />} onClick={() => exportCgpaPdf(semesters)}>Export PDF Report</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" icon={<FileDown size={14} />} onClick={() => exportCgpaPdf(semesters)}>Export PDF Report</Button>
+          <Button
+            variant="outline" size="sm"
+            icon={ocrLoading ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
+            onClick={() => fileRef.current?.click()}
+            disabled={ocrLoading}
+          >
+            {ocrLoading ? `Reading image... ${ocrProgress}%` : 'Add Image (Auto GPA)'}
+          </Button>
+          <input ref={fileRef} type="file" accept="image/*" onChange={handleImageSelected} className="hidden" />
+          <div className="flex gap-2">
+            <input
+              value={newSemName} onChange={(e) => setNewSemName(e.target.value)}
+              placeholder={`Semester ${semesters.length + 1}`}
+              className="w-36 px-3 py-2 rounded-xl text-sm outline-none glass"
+              style={{ color: 'var(--ink)' }}
+            />
+            <Button size="sm" icon={<Plus size={14} />} onClick={handleAddSemester}>Add Sem</Button>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -56,57 +125,6 @@ export default function CGPA() {
           <p className="font-display text-3xl font-bold" style={{ color: 'var(--ink)' }}>{semesters.length}</p>
         </Card>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader title="Semester GPA Comparison" />
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={semesterChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'var(--ink-soft)' }} />
-              <YAxis domain={[0, 10]} tick={{ fontSize: 12, fill: 'var(--ink-soft)' }} />
-              <Tooltip contentStyle={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 12, fontSize: 12 }} />
-              <Bar dataKey="gpa" radius={[8, 8, 0, 0]} fill="#FFB800" />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-        <Card delay={0.05}>
-          <CardHeader title="CGPA Trend" />
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={semesterChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'var(--ink-soft)' }} />
-              <YAxis domain={[0, 10]} tick={{ fontSize: 12, fill: 'var(--ink-soft)' }} />
-              <Tooltip contentStyle={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 12, fontSize: 12 }} />
-              <Line type="monotone" dataKey="gpa" stroke="#F2C94C" strokeWidth={3} dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
-
-      {gradeDistribution.length > 0 && (
-        <Card>
-          <CardHeader title="Grade Distribution" />
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <ResponsiveContainer width={200} height={200}>
-              <PieChart>
-                <Pie data={gradeDistribution} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
-                  {gradeDistribution.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                </Pie>
-                <Tooltip contentStyle={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 12, fontSize: 12 }} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex flex-wrap gap-3">
-              {gradeDistribution.map((g, i) => (
-                <div key={g.name} className="flex items-center gap-2 text-sm">
-                  <span className="w-3 h-3 rounded-full" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                  <span style={{ color: 'var(--ink)' }}>{g.name}: {g.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      )}
 
       {/* Semesters management */}
       <div className="space-y-4">
@@ -179,20 +197,93 @@ export default function CGPA() {
         ))}
       </div>
 
-      <div className="flex gap-2">
-        <input
-          value={newSemName} onChange={(e) => setNewSemName(e.target.value)}
-          placeholder={`Semester ${semesters.length + 1}`}
-          className="flex-1 max-w-xs px-3 py-2 rounded-xl text-sm outline-none glass"
-          style={{ color: 'var(--ink)' }}
-        />
-        <Button
-          icon={<Plus size={14} />}
-          onClick={() => { addSemester(newSemName.trim() || `Semester ${semesters.length + 1}`); setNewSemName(''); push('Semester added', 'success'); }}
-        >
-          Add Semester
-        </Button>
-      </div>
+      <Modal open={reviewOpen} onClose={() => setReviewOpen(false)} title="Review detected subjects" width="max-w-2xl">
+        <p className="text-sm mb-4" style={{ color: 'var(--ink-soft)' }}>
+          We read {parsedRows.length} subject(s) from your image. Check the name, credits, and grade for each —
+          OCR isn't perfect, so fix anything that looks off before adding. GPA is calculated automatically.
+        </p>
+
+        <div className="mb-4">
+          <label className="text-xs font-medium block mb-1.5" style={{ color: 'var(--ink-soft)' }}>Add to</label>
+          <div className="flex flex-wrap gap-2 items-center">
+            <select
+              value={importTarget}
+              onChange={(e) => setImportTarget(e.target.value)}
+              className="px-3 py-2 rounded-xl text-sm outline-none glass"
+              style={{ color: 'var(--ink)' }}
+            >
+              <option value="__new__">+ New semester</option>
+              {semesters.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+            {importTarget === '__new__' && (
+              <input
+                value={importSemName}
+                onChange={(e) => setImportSemName(e.target.value)}
+                placeholder="New semester name"
+                className="flex-1 min-w-[10rem] px-3 py-2 rounded-xl text-sm outline-none glass"
+                style={{ color: 'var(--ink)' }}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid var(--line)' }}>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left" style={{ color: 'var(--ink-soft)' }}>
+                <th className="px-3 py-2 font-medium">Subject</th>
+                <th className="px-3 py-2 font-medium w-24">Credits</th>
+                <th className="px-3 py-2 font-medium w-28">Grade</th>
+                <th className="px-3 py-2 font-medium w-8"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {parsedRows.map((row, i) => (
+                <tr key={i} className="border-t" style={{ borderColor: 'var(--line)' }}>
+                  <td className="px-3 py-2">
+                    <input
+                      value={row.name}
+                      onChange={(e) => updateParsedRow(i, { name: e.target.value })}
+                      className="bg-transparent outline-none w-full" style={{ color: 'var(--ink)' }}
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="number" min={0} value={row.credits}
+                      onChange={(e) => updateParsedRow(i, { credits: Number(e.target.value) })}
+                      className="bg-transparent outline-none w-16" style={{ color: 'var(--ink)' }}
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <select
+                      value={row.grade}
+                      onChange={(e) => updateParsedRow(i, { grade: e.target.value as Grade })}
+                      className="bg-transparent outline-none rounded-md" style={{ color: 'var(--ink)' }}
+                    >
+                      {GRADES.map((g) => <option key={g} value={g}>{g} ({GRADE_POINTS[g]})</option>)}
+                    </select>
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <button onClick={() => removeParsedRow(i)}>
+                      <Trash2 size={14} style={{ color: 'var(--ink-soft)' }} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {parsedRows.length === 0 && (
+                <tr><td colSpan={4} className="px-3 py-6 text-center text-sm" style={{ color: 'var(--ink-soft)' }}>No rows left — nothing to add.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-5">
+          <Button variant="outline" size="sm" onClick={() => setReviewOpen(false)}>Cancel</Button>
+          <Button size="sm" icon={<Check size={14} />} onClick={confirmImport} disabled={parsedRows.length === 0}>
+            Add {parsedRows.length} subject(s)
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

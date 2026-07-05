@@ -7,6 +7,8 @@ interface SettingsState {
   toggleTheme: () => void;
   profile: Profile;
   updateProfile: (p: Partial<Profile>) => void;
+  hasOnboarded: boolean;
+  completeOnboarding: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -15,14 +17,16 @@ export const useSettingsStore = create<SettingsState>()(
       theme: 'light',
       toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
       profile: {
-        name: 'Alex Rivera',
-        registerNumber: 'REG2024CS041',
-        department: 'Computer Science',
-        year: '3rd Year',
-        semester: 'Semester 5',
+        name: '',
+        registerNumber: '',
+        department: '',
+        year: '',
+        semester: '',
         avatar: '',
       },
       updateProfile: (p) => set((s) => ({ profile: { ...s.profile, ...p } })),
+      hasOnboarded: false,
+      completeOnboarding: () => set({ hasOnboarded: true }),
     }),
     { name: 'studenthub-settings' }
   )

@@ -13,10 +13,15 @@ export interface ClassBlock {
   color: string; // hex
 }
 
-export type Grade = 'O' | 'A+' | 'A' | 'B+' | 'B' | 'C' | 'U';
+export type Grade = 'S' | 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'U' | 'SA' | 'WC';
 
 export const GRADE_POINTS: Record<Grade, number> = {
-  'O': 10, 'A+': 9, 'A': 8, 'B+': 7, 'B': 6, 'C': 5, 'U': 0,
+  'S': 10, 'A+': 9, 'A': 8, 'B+': 7, 'B': 6.5, 'C+': 6, 'C': 5, 'U': 0, 'SA': 0, 'WC': 0,
+};
+
+export const GRADE_DESCRIPTIONS: Record<Grade, string> = {
+  'S': 'Outstanding', 'A+': 'Excellent', 'A': 'Very Good', 'B+': 'Good', 'B': 'Above Average',
+  'C+': 'Average', 'C': 'Satisfactory', 'U': 'Re-appearance', 'SA': 'Shortage of Attendance', 'WC': 'Withdrawal of Course',
 };
 
 export interface Subject {

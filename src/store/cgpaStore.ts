@@ -9,7 +9,7 @@ const seed: Semester[] = [
     subjects: [
       { id: 'a', name: 'Mathematics I', credits: 4, grade: 'A' },
       { id: 'b', name: 'Physics', credits: 3, grade: 'A+' },
-      { id: 'c', name: 'Programming Basics', credits: 4, grade: 'O' },
+      { id: 'c', name: 'Programming Basics', credits: 4, grade: 'S' },
     ],
   },
   {
@@ -40,6 +40,10 @@ interface CgpaState {
   addSubject: (semId: string, name: string, credits: number, grade: Grade) => void;
   updateSubject: (semId: string, subId: string, patch: Partial<Subject>) => void;
   removeSubject: (semId: string, subId: string) => void;
+  importSubjects: (
+    target: { semId?: string; newSemesterName?: string },
+    subjects: { name: string; credits: number; grade: Grade }[]
+  ) => void;
 }
 
 export const useCgpaStore = create<CgpaState>()(
@@ -63,6 +67,22 @@ export const useCgpaStore = create<CgpaState>()(
           ? { ...sem, subjects: sem.subjects.filter((sub) => sub.id !== subId) }
           : sem),
       })),
+      importSubjects: (target, subjects) => set((s) => {
+        const newSubjects: Subject[] = subjects.map((sub) => ({ ...sub, id: crypto.randomUUID() }));
+        if (target.semId) {
+          return {
+            semesters: s.semesters.map((sem) => sem.id === target.semId
+              ? { ...sem, subjects: [...sem.subjects, ...newSubjects] }
+              : sem),
+          };
+        }
+        const newSemester: Semester = {
+          id: crypto.randomUUID(),
+          name: target.newSemesterName?.trim() || `Semester ${s.semesters.length + 1}`,
+          subjects: newSubjects,
+        };
+        return { semesters: [...s.semesters, newSemester] };
+      }),
     }),
     { name: 'studenthub-cgpa' }
   )

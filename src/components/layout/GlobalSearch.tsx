@@ -61,7 +61,7 @@ export function GlobalSearch() {
 
   return (
     <div ref={ref} className="relative w-full max-w-sm">
-      <div className="flex items-center gap-2 rounded-xl px-3 py-2 glass">
+      <div className="flex items-center gap-2 rounded-xl px-3 py-2 search-bar">
         <Search size={16} style={{ color: 'var(--ink-soft)' }} />
         <input
           value={query}
@@ -76,7 +76,7 @@ export function GlobalSearch() {
         )}
       </div>
       {open && results.length > 0 && (
-        <div className="absolute mt-2 w-full glass rounded-xl overflow-hidden z-50 shadow-xl">
+        <div className="absolute mt-2 w-full glass-solid rounded-xl overflow-hidden z-50 shadow-xl" style={{ background: 'var(--glass-solid)' }}>
           {results.map((r) => (
             <button
               key={r.section + r.id}

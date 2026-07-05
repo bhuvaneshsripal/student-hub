@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { AlertTriangle, CalendarClock, ListChecks, Rocket } from 'lucide-react';
+import { AlertTriangle, CalendarClock, ListChecks, Rocket, X } from 'lucide-react';
 import { useAttendanceStore, attendancePercent, SAFE_THRESHOLD } from '../../store/attendanceStore';
 import { useProductivityStore } from '../../store/productivityStore';
 import { usePlacementStore } from '../../store/placementStore';
@@ -18,10 +18,20 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
     <motion.div
       initial={{ opacity: 0, y: -8, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      className="absolute right-0 top-12 w-80 glass rounded-2xl p-2 shadow-xl z-50 max-h-96 overflow-y-auto"
-      onMouseLeave={onClose}
+      exit={{ opacity: 0, y: -8, scale: 0.97 }}
+      className="fixed left-4 right-4 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-80 accent-solid rounded-2xl p-2 shadow-xl z-50 max-h-[70vh] overflow-y-auto"
+      style={{ background: 'var(--accent-solid)' }}
     >
-      <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Notifications</div>
+      <div className="flex items-center justify-between px-3 py-2 sticky top-0" style={{ background: 'var(--accent-solid)' }}>
+        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--ink-soft)' }}>Notifications</span>
+        <button
+          onClick={onClose}
+          aria-label="Close notifications"
+          className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.08]"
+        >
+          <X size={14} style={{ color: 'var(--ink-soft)' }} />
+        </button>
+      </div>
       {lowAttendance.map((s) => (
         <div key={s.id} className="flex gap-3 px-3 py-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
           <AlertTriangle size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--danger)' }} />

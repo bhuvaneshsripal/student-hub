@@ -8,8 +8,11 @@ export function ThemeToggle() {
     <button
       onClick={toggleTheme}
       aria-label="Toggle dark mode"
-      className="relative w-14 h-8 rounded-full flex items-center px-1 transition-colors"
-      style={{ background: isDark ? 'linear-gradient(90deg, var(--blue), var(--purple))' : 'var(--line)' }}
+      className="relative w-14 h-8 rounded-full flex items-center px-1 transition-colors border"
+      style={{
+        background: isDark ? 'linear-gradient(90deg, var(--blue), var(--purple))' : 'var(--accent-solid)',
+        borderColor: isDark ? 'transparent' : 'var(--accent-solid-border)',
+      }}
     >
       <div
         className="w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center transition-transform duration-300"

@@ -24,7 +24,8 @@ export function Modal({ open, onClose, title, children, width = 'max-w-lg' }: Mo
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className={`relative w-full ${width} glass rounded-2xl p-6 max-h-[85vh] overflow-y-auto`}
+            className={`relative w-full ${width} glass-solid rounded-2xl p-6 max-h-[85vh] overflow-y-auto`}
+            style={{ background: 'var(--glass-solid)' }}
           >
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-display font-semibold text-lg" style={{ color: 'var(--ink)' }}>{title}</h3>

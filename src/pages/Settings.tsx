@@ -84,6 +84,10 @@ export default function Settings() {
           <Button variant="outline" icon={<Upload size={14} />} onClick={() => fileRef.current?.click()}>Import Backup</Button>
           <input ref={fileRef} type="file" accept="application/json" onChange={restore} className="hidden" />
         </div>
+        <p className="text-xs mt-4 leading-snug" style={{ color: 'var(--ink-soft)' }}>
+          If you have saved your data as a JSON file, then once you download it and keep it, you can re-import that
+          JSON file later. After doing so, all your data will be restored, and you'll be able to access it again.
+        </p>
       </Card>
 
       <Card>

@@ -121,7 +121,7 @@ export default function Timetable() {
               className="rounded-2xl p-3 glass min-h-[140px]"
             >
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--ink)' }}>{day}</h3>
+                <h3 className="font-display font-semibold text-base" style={{ color: 'var(--ink)' }}>{day}</h3>
                 <button onClick={() => openAdd(day)} className="no-print w-6 h-6 rounded-md flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.08]">
                   <Plus size={13} style={{ color: 'var(--ink-soft)' }} />
                 </button>
@@ -137,9 +137,9 @@ export default function Timetable() {
                   >
                     <div className="flex items-start justify-between gap-1">
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold truncate" style={{ color: 'var(--ink)' }}>{c.subject}</p>
-                        <p className="text-[11px] truncate" style={{ color: 'var(--ink-soft)' }}>{c.faculty}</p>
-                        <p className="text-[11px] font-mono" style={{ color: 'var(--ink-soft)' }}>{c.start}–{c.end} • {c.room}</p>
+                        <p className="text-sm font-semibold truncate" style={{ color: 'var(--ink)' }}>{c.subject}</p>
+                        <p className="text-xs truncate" style={{ color: 'var(--ink-soft)' }}>{c.faculty}</p>
+                        <p className="text-xs font-mono" style={{ color: 'var(--ink-soft)' }}>{c.start}–{c.end} • {c.room}</p>
                       </div>
                       <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
                         <button onClick={() => openEdit(c)}><Pencil size={11} style={{ color: 'var(--ink-soft)' }} /></button>
@@ -149,7 +149,7 @@ export default function Timetable() {
                   </div>
                 ))}
                 {dayClasses.length === 0 && (
-                  <p className="text-[11px] text-center py-4" style={{ color: 'var(--ink-soft)' }}>No classes</p>
+                  <p className="text-xs text-center py-4" style={{ color: 'var(--ink-soft)' }}>No classes</p>
                 )}
               </div>
             </div>

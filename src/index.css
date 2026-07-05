@@ -8,6 +8,7 @@
   --ink-soft: #6B6B5E;
   --line: rgba(20, 20, 10, 0.1);
   --glass: rgba(255, 255, 255, 0.6);
+  --glass-solid: #FFFFFF;
   --glass-border: rgba(242, 201, 76, 0.35);
   --blue: #F2C94C;
   --purple: #FFB800;
@@ -16,6 +17,12 @@
   --warning: #F5A623;
   --danger: #F04438;
   --shadow: 0 10px 40px -12px rgba(242, 201, 76, 0.35);
+  --accent-solid: #FCEBB6;
+  --accent-solid-border: #F2C94C;
+  --search-bg: rgba(255, 255, 255, 0.55);
+  --search-border: rgba(242, 201, 76, 0.55);
+  --nav-panel: rgba(252, 235, 182, 0.92);
+  --nav-panel-border: rgba(242, 201, 76, 0.3);
 }
 
 .dark {
@@ -25,8 +32,15 @@
   --ink-soft: #B3B3A6;
   --line: rgba(255, 255, 255, 0.1);
   --glass: rgba(18, 18, 18, 0.6);
+  --glass-solid: #121212;
   --glass-border: rgba(242, 201, 76, 0.2);
   --shadow: 0 10px 40px -12px rgba(242, 201, 76, 0.35);
+  --accent-solid: #4A3A0A;
+  --accent-solid-border: #F2C94C;
+  --search-bg: rgba(255, 255, 255, 0.08);
+  --search-border: rgba(242, 201, 76, 0.4);
+  --nav-panel: rgba(74, 58, 10, 0.92);
+  --nav-panel-border: rgba(242, 201, 76, 0.18);
 }
 
 * {
@@ -58,9 +72,10 @@ body {
     radial-gradient(at 15% 10%, rgba(242, 201, 76, 0.25) 0px, transparent 55%),
     radial-gradient(at 85% 0%, rgba(255, 184, 0, 0.20) 0px, transparent 50%),
     radial-gradient(at 90% 90%, rgba(255, 224, 102, 0.18) 0px, transparent 50%),
-    radial-gradient(rgba(242, 201, 76, 0.35) 1px, transparent 1px);
-  background-size: auto, auto, auto, 22px 22px;
-  background-position: 0 0, 0 0, 0 0, 0 0;
+    linear-gradient(to right, rgba(242, 201, 76, 0.28) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(242, 201, 76, 0.28) 1px, transparent 1px);
+  background-size: auto, auto, auto, 26px 26px, 26px 26px;
+  background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
   background-attachment: fixed;
 }
 
@@ -69,8 +84,9 @@ body {
     radial-gradient(at 15% 10%, rgba(242, 201, 76, 0.12) 0px, transparent 55%),
     radial-gradient(at 85% 0%, rgba(255, 184, 0, 0.10) 0px, transparent 50%),
     radial-gradient(at 90% 90%, rgba(255, 224, 102, 0.08) 0px, transparent 50%),
-    radial-gradient(rgba(242, 201, 76, 0.16) 1px, transparent 1px);
-  background-size: auto, auto, auto, 22px 22px;
+    linear-gradient(to right, rgba(242, 201, 76, 0.14) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(242, 201, 76, 0.14) 1px, transparent 1px);
+  background-size: auto, auto, auto, 26px 26px, 26px 26px;
 }
 
 .glass {
@@ -79,6 +95,51 @@ body {
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow);
+}
+
+/* Fully opaque variant for overlay UI (drawers, dropdowns, panels) where
+   backdrop-filter support is inconsistent on mobile browsers and causes
+   the panel behind it to visibly show through. Always solid, no blur. */
+.glass-solid {
+  background: var(--glass-solid);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+}
+
+/* Solid opaque yellow surface (theme accent color) used for the
+   notifications panel and the JSON restore notice. */
+.accent-solid {
+  background: var(--accent-solid);
+  border: 1px solid var(--accent-solid-border);
+  box-shadow: var(--shadow);
+}
+
+/* Navigation menu surface: a soft, mostly-opaque light-yellow tint (rather
+   than a stark solid white/black or a fully see-through panel) so the
+   sidebar reads as part of the theme instead of clashing with the mesh
+   background behind it. High opacity keeps it reliable on mobile, where
+   backdrop-filter support is inconsistent; the blur is a bonus, not a
+   requirement. */
+.nav-panel {
+  background: var(--nav-panel);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-color: var(--nav-panel-border);
+}
+
+.search-bar {
+  background: var(--search-bg);
+  border: 1px solid var(--search-border);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.search-bar:focus-within {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: var(--accent-solid-border);
+}
+
+.dark .search-bar:focus-within {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .grad-text {
@@ -91,6 +152,8 @@ body {
 .grad-ring {
   background: conic-gradient(from 180deg, var(--blue), var(--purple), var(--pink), var(--blue));
 }
+
+.no-scroll { overflow: hidden !important; height: 100%; }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }

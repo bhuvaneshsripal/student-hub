@@ -33,6 +33,7 @@ export default function Dashboard() {
   const attendanceSubjects = useAttendanceStore((s) => s.subjects);
   const tasks = useProductivityStore((s) => s.tasks);
   const events = useProductivityStore((s) => s.events);
+  const pomodoroSessions = useProductivityStore((s) => s.pomodoroSessions);
   const studyStreak = useProductivityStore((s) => s.studyStreak());
   const weeklyHours = useProductivityStore((s) => s.weeklyStudyHours());
   const readiness = usePlacementStore((s) => s.readinessScore());
@@ -66,7 +67,7 @@ export default function Dashboard() {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: 'var(--ink)' }}>
-            {greeting()}, <span className="grad-text">{profile.name.split(' ')[0]}</span>
+            {greeting()}, <span className="grad-text">{profile.name.trim() ? profile.name.trim().split(' ')[0] : 'there'}</span>
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>
             {now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • {now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
@@ -74,7 +75,7 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl glass">
           <Flame size={16} style={{ color: 'var(--warning)' }} />
-          <span style={{ color: 'var(--ink)' }}><b>{studyStreak}</b> day streak</span>
+          <span style={{ color: 'var(--ink)' }}><b>{pomodoroSessions.length === 0 ? '-' : studyStreak}</b> day streak</span>
         </div>
       </motion.div>
 
@@ -84,29 +85,29 @@ export default function Dashboard() {
           <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--ink-soft)' }}>
             <TrendingUp size={15} /><span className="text-xs font-medium">Current CGPA</span>
           </div>
-          <p className="font-display text-3xl font-bold" style={{ color: 'var(--ink)' }}>{cgpa.toFixed(2)}</p>
+          <p className="font-display text-3xl font-bold" style={{ color: 'var(--ink)' }}>{semesters.length === 0 ? '-' : cgpa.toFixed(2)}</p>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>out of 10.00</p>
         </Card>
         <Card delay={0.06}>
           <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--ink-soft)' }}>
             <ClipboardCheck size={15} /><span className="text-xs font-medium">Attendance</span>
           </div>
-          <p className="font-display text-3xl font-bold" style={{ color: avgAttendance >= SAFE_THRESHOLD ? 'var(--success)' : 'var(--danger)' }}>{avgAttendance.toFixed(0)}%</p>
+          <p className="font-display text-3xl font-bold" style={{ color: attendanceSubjects.length === 0 ? 'var(--ink)' : (avgAttendance >= SAFE_THRESHOLD ? 'var(--success)' : 'var(--danger)') }}>{attendanceSubjects.length === 0 ? '-' : `${avgAttendance.toFixed(0)}%`}</p>
           <ProgressBar value={avgAttendance} />
         </Card>
         <Card delay={0.1}>
           <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--ink-soft)' }}>
             <BookOpen size={15} /><span className="text-xs font-medium">Weekly Study</span>
           </div>
-          <p className="font-display text-3xl font-bold" style={{ color: 'var(--ink)' }}>{weeklyHours}h</p>
+          <p className="font-display text-3xl font-bold" style={{ color: 'var(--ink)' }}>{pomodoroSessions.length === 0 ? '-' : `${weeklyHours}h`}</p>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>this week</p>
         </Card>
         <Card delay={0.14}>
           <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--ink-soft)' }}>
             <ListChecks size={15} /><span className="text-xs font-medium">Pending Tasks</span>
           </div>
-          <p className="font-display text-3xl font-bold" style={{ color: 'var(--ink)' }}>{pendingTasks.length}</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>{tasks.length - pendingTasks.length} completed</p>
+          <p className="font-display text-3xl font-bold" style={{ color: 'var(--ink)' }}>{tasks.length === 0 ? '-' : pendingTasks.length}</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>{tasks.length === 0 ? 'no tasks yet' : `${tasks.length - pendingTasks.length} completed`}</p>
         </Card>
       </div>
 

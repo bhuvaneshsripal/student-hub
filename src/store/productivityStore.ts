@@ -26,9 +26,7 @@ interface ProductivityState {
 export const useProductivityStore = create<ProductivityState>()(
   persist(
     (set, get) => ({
-      notes: [
-        { id: crypto.randomUUID(), title: 'OS Unit 3 — Deadlocks', content: 'Necessary conditions: mutual exclusion, hold and wait, no preemption, circular wait. Banker\'s algorithm for avoidance.', updatedAt: new Date().toISOString(), tags: ['os', 'exam'] },
-      ],
+      notes: [],
       addNote: (title, content, tags) => set((s) => ({
         notes: [{ id: crypto.randomUUID(), title, content, tags, updatedAt: new Date().toISOString() }, ...s.notes],
       })),
@@ -37,10 +35,7 @@ export const useProductivityStore = create<ProductivityState>()(
       })),
       removeNote: (id) => set((s) => ({ notes: s.notes.filter((n) => n.id !== id) })),
 
-      tasks: [
-        { id: crypto.randomUUID(), title: 'Finish DBMS assignment 3', dueDate: new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10), priority: 'high', done: false, createdAt: new Date().toISOString() },
-        { id: crypto.randomUUID(), title: 'Revise Networks unit 2', dueDate: new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10), priority: 'medium', done: false, createdAt: new Date().toISOString() },
-      ],
+      tasks: [],
       addTask: (title, dueDate, priority) => set((s) => ({
         tasks: [{ id: crypto.randomUUID(), title, dueDate, priority, done: false, createdAt: new Date().toISOString() }, ...s.tasks],
       })),

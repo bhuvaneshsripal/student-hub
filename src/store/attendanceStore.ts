@@ -2,12 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { AttendanceSubject } from '../types';
 
-const seed: AttendanceSubject[] = [
-  { id: 'a1', name: 'Data Structures', total: 40, attended: 34 },
-  { id: 'a2', name: 'Operating Systems', total: 38, attended: 27 },
-  { id: 'a3', name: 'Database Systems', total: 35, attended: 22 },
-  { id: 'a4', name: 'Computer Networks', total: 30, attended: 29 },
-];
+const seed: AttendanceSubject[] = [];
 
 export const SAFE_THRESHOLD = 80;
 

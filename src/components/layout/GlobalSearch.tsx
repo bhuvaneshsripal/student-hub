@@ -21,7 +21,11 @@ export function GlobalSearch() {
   const classes = useTimetableStore((s) => s.classes);
   const notes = useProductivityStore((s) => s.notes);
   const tasks = useProductivityStore((s) => s.tasks);
-  const placement = usePlacementStore();
+  const aptitude = usePlacementStore((s) => s.aptitude);
+  const languages = usePlacementStore((s) => s.languages);
+  const dsa = usePlacementStore((s) => s.dsa);
+  const webdev = usePlacementStore((s) => s.webdev);
+  const interview = usePlacementStore((s) => s.interview);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -50,14 +54,14 @@ export function GlobalSearch() {
         out.push({ id: t.id, label: t.title, section: 'Tasks', to: '/todo' });
       }
     });
-    const topicGroups = [placement.aptitude, placement.languages, placement.dsa, placement.webdev, placement.interview];
+    const topicGroups = [aptitude, languages, dsa, webdev, interview];
     topicGroups.flat().forEach((t) => {
       if (t.name.toLowerCase().includes(q)) {
         out.push({ id: t.id, label: t.name, section: 'Placement', to: '/placement' });
       }
     });
     return out.slice(0, 8);
-  }, [query, classes, notes, tasks, placement]);
+  }, [query, classes, notes, tasks, aptitude, languages, dsa, webdev, interview]);
 
   return (
     <div ref={ref} className="relative w-full max-w-sm">

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Menu } from 'lucide-react';
+import { Bell, Menu, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { GlobalSearch } from './GlobalSearch';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { useSettingsStore } from '../../store/settingsStore';
@@ -44,9 +45,17 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
           <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--danger)]" />
         </button>
         {notifOpen && <NotificationsPanel onClose={() => setNotifOpen(false)} />}
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-white font-display font-semibold text-sm shrink-0">
-          {profile.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
-        </div>
+        <Link
+          to="/profile"
+          aria-label="Go to profile"
+          className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-white font-display font-semibold text-sm shrink-0 overflow-hidden"
+        >
+          {profile.avatar ? (
+            <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover" />
+          ) : (
+            profile.name.trim() ? profile.name.trim().split(' ').map((n) => n[0]).slice(0, 2).join('') : <User size={16} />
+          )}
+        </Link>
       </div>
     </header>
   );

@@ -4,6 +4,8 @@ import { AppLayout } from './components/layout/AppLayout';
 import { CloudSync } from './components/CloudSync';
 import { useAuthUser } from './hooks/useAuthUser';
 import Login from './pages/Login';
+import { useEffect } from "react";
+import { useTimetableStore } from "./store/timetableStore";
 
 // Route-level code splitting: each page ships as its own chunk and is only
 // downloaded when the user actually navigates there, keeping the initial
@@ -51,6 +53,12 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const syncTimetable = useTimetableStore((s) => s.sync);
+
+  useEffect(() => {
+    syncTimetable();
+  }, []);
+  
   return (
     <BrowserRouter>
       <CloudSync />

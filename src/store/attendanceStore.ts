@@ -41,16 +41,21 @@ export function attendanceStatus(pct: number): 'safe' | 'warning' | 'danger' {
 
 interface AttendanceState {
   subjects: AttendanceSubject[];
+  semesterStart: string; // "YYYY-MM-DD"
+  semesterEnd: string; // "YYYY-MM-DD"
   addSubject: (name: string, total: number, attended: number) => void;
   updateSubject: (id: string, patch: Partial<AttendanceSubject>) => void;
   removeSubject: (id: string) => void;
   markToday: (id: string, present: boolean) => void;
+  setSemesterDates: (start: string, end: string) => void;
 }
 
 export const useAttendanceStore = create<AttendanceState>()(
   persist(
     (set) => ({
       subjects: seed,
+      semesterStart: '',
+      semesterEnd: '',
       addSubject: (name, total, attended) => set((s) => ({
         subjects: [...s.subjects, { id: crypto.randomUUID(), name, total, attended }],
       })),
@@ -63,7 +68,25 @@ export const useAttendanceStore = create<AttendanceState>()(
           ? { ...x, total: x.total + 1, attended: x.attended + (present ? 1 : 0) }
           : x),
       })),
+      setSemesterDates: (start, end) => set({ semesterStart: start, semesterEnd: end }),
     }),
     { name: 'studenthub-attendance' }
   )
 );
+
+/** Total calendar days and estimated working days (excluding Sundays)
+ * between the stored semester start/end dates. Returns null if either
+ * date is missing or the range is invalid. */
+export function semesterDayCounts(start: string, end: string): { totalDays: number; workingDays: number } | null {
+  if (!start || !end) return null;
+  const s = new Date(start + 'T00:00:00');
+  const e = new Date(end + 'T00:00:00');
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || e < s) return null;
+  let totalDays = 0;
+  let workingDays = 0;
+  for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+    totalDays++;
+    if (d.getDay() !== 0) workingDays++; // exclude Sundays
+  }
+  return { totalDays, workingDays };
+}

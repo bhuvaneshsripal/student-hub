@@ -153,25 +153,25 @@ export default function CGPA() {
                 <tbody>
                   {sem.subjects.map((sub) => (
                     <tr key={sub.id} className="border-t" style={{ borderColor: 'var(--line)' }}>
-                      <td className="py-2">
+                      <td className="py-2 pr-2">
                         <input
                           value={sub.name}
                           onChange={(e) => updateSubject(sem.id, sub.id, { name: e.target.value })}
-                          className="bg-transparent outline-none w-full" style={{ color: 'var(--ink)' }}
+                          className="subject-field w-full"
                         />
                       </td>
-                      <td className="py-2 w-24">
+                      <td className="py-2 pr-2 w-20">
                         <input
                           type="number" min={0} value={sub.credits}
                           onChange={(e) => updateSubject(sem.id, sub.id, { credits: Number(e.target.value) })}
-                          className="bg-transparent outline-none w-16" style={{ color: 'var(--ink)' }}
+                          className="subject-field w-full text-center"
                         />
                       </td>
-                      <td className="py-2 w-28">
+                      <td className="py-2 pr-2 w-32">
                         <select
                           value={sub.grade}
                           onChange={(e) => updateSubject(sem.id, sub.id, { grade: e.target.value as Grade })}
-                          className="bg-transparent outline-none rounded-md" style={{ color: 'var(--ink)' }}
+                          className="subject-field w-full"
                         >
                           {GRADES.map((g) => <option key={g} value={g}>{g} ({GRADE_POINTS[g]})</option>)}
                         </select>
@@ -244,21 +244,21 @@ export default function CGPA() {
                     <input
                       value={row.name}
                       onChange={(e) => updateParsedRow(i, { name: e.target.value })}
-                      className="bg-transparent outline-none w-full" style={{ color: 'var(--ink)' }}
+                      className="subject-field w-full"
                     />
                   </td>
                   <td className="px-3 py-2">
                     <input
                       type="number" min={0} value={row.credits}
                       onChange={(e) => updateParsedRow(i, { credits: Number(e.target.value) })}
-                      className="bg-transparent outline-none w-16" style={{ color: 'var(--ink)' }}
+                      className="subject-field w-full text-center"
                     />
                   </td>
                   <td className="px-3 py-2">
                     <select
                       value={row.grade}
                       onChange={(e) => updateParsedRow(i, { grade: e.target.value as Grade })}
-                      className="bg-transparent outline-none rounded-md" style={{ color: 'var(--ink)' }}
+                      className="subject-field w-full"
                     >
                       {GRADES.map((g) => <option key={g} value={g}>{g} ({GRADE_POINTS[g]})</option>)}
                     </select>
@@ -284,6 +284,26 @@ export default function CGPA() {
           </Button>
         </div>
       </Modal>
+
+      <style>{`
+        .subject-field {
+          padding: 0.4rem 0.6rem;
+          border-radius: 0.6rem;
+          border: 1px solid var(--line);
+          background: var(--bg);
+          color: var(--ink);
+          font-size: 0.875rem;
+          outline: none;
+          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .subject-field:hover {
+          border-color: var(--purple);
+        }
+        .subject-field:focus {
+          border-color: var(--purple);
+          box-shadow: 0 0 0 3px rgba(59, 91, 255, 0.15);
+        }
+      `}</style>
     </div>
   );
 }

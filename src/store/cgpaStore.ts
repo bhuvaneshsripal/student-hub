@@ -3,24 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { Semester, Subject, Grade } from '../types';
 import { GRADE_POINTS } from '../types';
 
-const seed: Semester[] = [
-  {
-    id: 's1', name: 'Semester 1',
-    subjects: [
-      { id: 'a', name: 'Mathematics I', credits: 4, grade: 'A' },
-      { id: 'b', name: 'Physics', credits: 3, grade: 'A+' },
-      { id: 'c', name: 'Programming Basics', credits: 4, grade: 'S' },
-    ],
-  },
-  {
-    id: 's2', name: 'Semester 2',
-    subjects: [
-      { id: 'd', name: 'Mathematics II', credits: 4, grade: 'B+' },
-      { id: 'e', name: 'Data Structures', credits: 4, grade: 'A' },
-      { id: 'f', name: 'Digital Logic', credits: 3, grade: 'A' },
-    ],
-  },
-];
+const seed: Semester[] = [];
 
 export function semesterGPA(subjects: Subject[]) {
   const totalCredits = subjects.reduce((s, x) => s + x.credits, 0);

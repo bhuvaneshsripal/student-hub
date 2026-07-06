@@ -7,7 +7,7 @@ import { useToastStore } from '../store/toastStore';
 import { DAYS, type ClassBlock, type Day } from '../types';
 import { exportTimetablePdf } from '../utils/pdf';
 
-const COLORS = ['#F2C94C', '#FFB800', '#FFE066', '#17B26A', '#F5A623', '#F04438', '#06B6D4'];
+const COLORS = ['#3B5BFF', '#8B3AFF', '#06B6D4', '#EC4899', '#10B981', '#FF9F1C', '#F04438'];
 
 const emptyForm = { day: 'Monday' as Day, subject: '', faculty: '', room: '', start: '09:00', end: '10:00', color: COLORS[0] };
 
@@ -141,9 +141,21 @@ export default function Timetable() {
                         <p className="text-xs truncate" style={{ color: 'var(--ink-soft)' }}>{c.faculty}</p>
                         <p className="text-xs font-mono" style={{ color: 'var(--ink-soft)' }}>{c.start}–{c.end} • {c.room}</p>
                       </div>
-                      <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                        <button onClick={() => openEdit(c)}><Pencil size={11} style={{ color: 'var(--ink-soft)' }} /></button>
-                        <button onClick={() => { removeClass(c.id); push('Class removed', 'info'); }}><Trash2 size={11} style={{ color: 'var(--danger)' }} /></button>
+                      <div className="flex flex-col gap-1 shrink-0 no-print">
+                        <button
+                          onClick={() => openEdit(c)}
+                          aria-label="Edit class"
+                          className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.1]"
+                        >
+                          <Pencil size={12} style={{ color: 'var(--ink-soft)' }} />
+                        </button>
+                        <button
+                          onClick={() => { removeClass(c.id); push('Class removed', 'info'); }}
+                          aria-label="Remove class"
+                          className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.1]"
+                        >
+                          <Trash2 size={12} style={{ color: 'var(--danger)' }} />
+                        </button>
                       </div>
                     </div>
                   </div>

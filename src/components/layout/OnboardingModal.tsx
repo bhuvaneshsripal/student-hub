@@ -36,7 +36,7 @@ export function OnboardingModal() {
                 <Bot size={20} />
               </div>
               <div>
-                <h3 className="font-display font-semibold text-lg" style={{ color: 'var(--ink)' }}>Welcome to Student Hub</h3>
+                <h3 className="font-display font-semibold text-lg" style={{ color: 'var(--ink)' }}>Welcome to Studo</h3>
                 <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Tell us a bit about yourself to personalize the app.</p>
               </div>
             </div>

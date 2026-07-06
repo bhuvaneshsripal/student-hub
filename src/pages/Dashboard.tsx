@@ -4,7 +4,7 @@ import {
   Clock, Flame, BookOpen, TrendingUp, CalendarClock, ClipboardCheck,
   Rocket, ListChecks, ArrowRight,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardHeader } from '../components/ui/Card';
 import { ProgressBar } from '../components/ui/ProgressBar';
 import { ProgressRing } from '../components/ui/ProgressRing';
@@ -25,6 +25,7 @@ function greeting() {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
   const profile = useSettingsStore((s) => s.profile);
@@ -70,7 +71,7 @@ export default function Dashboard() {
             {greeting()}, <span className="grad-text">{profile.name.trim() ? profile.name.trim().split(' ')[0] : 'there'}</span>
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>
-            {now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • {now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+            {now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • {now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true })}
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl glass">
@@ -81,28 +82,28 @@ export default function Dashboard() {
 
       {/* Top stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card delay={0.02}>
+        <Card delay={0.02} onClick={() => navigate('/cgpa')} className="cursor-pointer">
           <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--ink-soft)' }}>
             <TrendingUp size={15} /><span className="text-xs font-medium">Current CGPA</span>
           </div>
           <p className="font-display text-3xl font-bold" style={{ color: 'var(--ink)' }}>{semesters.length === 0 ? '-' : cgpa.toFixed(2)}</p>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>out of 10.00</p>
         </Card>
-        <Card delay={0.06}>
+        <Card delay={0.06} onClick={() => navigate('/attendance')} className="cursor-pointer">
           <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--ink-soft)' }}>
             <ClipboardCheck size={15} /><span className="text-xs font-medium">Attendance</span>
           </div>
           <p className="font-display text-3xl font-bold" style={{ color: attendanceSubjects.length === 0 ? 'var(--ink)' : (avgAttendance >= SAFE_THRESHOLD ? 'var(--success)' : 'var(--danger)') }}>{attendanceSubjects.length === 0 ? '-' : `${avgAttendance.toFixed(0)}%`}</p>
           <ProgressBar value={avgAttendance} />
         </Card>
-        <Card delay={0.1}>
+        <Card delay={0.1} onClick={() => navigate('/pomodoro')} className="cursor-pointer">
           <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--ink-soft)' }}>
             <BookOpen size={15} /><span className="text-xs font-medium">Weekly Study</span>
           </div>
           <p className="font-display text-3xl font-bold" style={{ color: 'var(--ink)' }}>{pomodoroSessions.length === 0 ? '-' : `${weeklyHours}h`}</p>
           <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>this week</p>
         </Card>
-        <Card delay={0.14}>
+        <Card delay={0.14} onClick={() => navigate('/todo')} className="cursor-pointer">
           <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--ink-soft)' }}>
             <ListChecks size={15} /><span className="text-xs font-medium">Pending Tasks</span>
           </div>
@@ -113,12 +114,12 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Timetable */}
-        <Card className="lg:col-span-2" delay={0.05}>
+        <Card className="lg:col-span-2 cursor-pointer" delay={0.05} onClick={() => navigate('/timetable')}>
           <CardHeader
             title="Today's Timetable"
             subtitle={todayName ? todayName : 'No classes on Sunday'}
             icon={<CalendarClock size={17} />}
-            action={<Link to="/timetable" className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--blue)' }}>View all <ArrowRight size={12} /></Link>}
+            action={<Link to="/timetable" onClick={(e) => e.stopPropagation()} className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--blue)' }}>View all <ArrowRight size={12} /></Link>}
           />
           {todayClasses.length === 0 ? (
             <p className="text-sm py-6 text-center" style={{ color: 'var(--ink-soft)' }}>No classes scheduled today. Enjoy your day! 🎉</p>
@@ -139,11 +140,11 @@ export default function Dashboard() {
         </Card>
 
         {/* Placement readiness */}
-        <Card delay={0.08}>
+        <Card delay={0.08} className="cursor-pointer" onClick={() => navigate('/placement')}>
           <CardHeader title="Placement Progress" icon={<Rocket size={17} />} />
           <div className="flex flex-col items-center gap-3">
             <ProgressRing value={readiness} label="Ready" />
-            <Link to="/placement" className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--blue)' }}>
+            <Link to="/placement" onClick={(e) => e.stopPropagation()} className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--blue)' }}>
               View roadmap <ArrowRight size={12} />
             </Link>
           </div>
@@ -152,7 +153,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Upcoming exams / assignments */}
-        <Card delay={0.1}>
+        <Card delay={0.1} className="cursor-pointer" onClick={() => navigate('/calendar')}>
           <CardHeader title="Upcoming Exams & Assignments" icon={<CalendarClock size={17} />} />
           {upcomingExams.length === 0 && pendingTasks.length === 0 ? (
             <p className="text-sm py-4 text-center" style={{ color: 'var(--ink-soft)' }}>Nothing on the horizon.</p>

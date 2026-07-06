@@ -3,12 +3,13 @@ import { Bell, Menu, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { GlobalSearch } from './GlobalSearch';
 import { ThemeToggle } from '../ui/ThemeToggle';
-import { useSettingsStore } from '../../store/settingsStore';
+import { useSettingsStore, playNotificationSound } from '../../store/settingsStore';
 import { NotificationsPanel } from './NotificationsPanel';
 
 export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const profile = useSettingsStore((s) => s.profile);
+  const notificationSound = useSettingsStore((s) => s.notificationSound);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   // Close the notifications panel on outside click/tap so it never gets
@@ -37,7 +38,10 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
       <div ref={wrapRef} className="flex items-center gap-2 sm:gap-3 relative shrink-0">
         <ThemeToggle />
         <button
-          onClick={() => setNotifOpen((o) => !o)}
+          onClick={() => setNotifOpen((o) => {
+            if (!o && notificationSound) playNotificationSound();
+            return !o;
+          })}
           aria-label="Notifications"
           className="relative w-9 h-9 rounded-xl flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06] shrink-0"
         >

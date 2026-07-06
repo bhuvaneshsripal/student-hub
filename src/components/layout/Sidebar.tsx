@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarClock, GraduationCap, ClipboardCheck, Rocket,
-  StickyNote, ListTodo, Timer, Calendar, Settings, User, Bot as Logo,
+  StickyNote, ListTodo, Timer, Calendar, Settings, User,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -31,10 +31,8 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex flex-col h-full py-6 px-4">
       <div className="flex items-center gap-2.5 px-2 mb-8">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-white shrink-0">
-          <Logo size={18} />
-        </div>
-        <span className="font-display font-bold text-lg grad-text">Student Hub</span>
+        <img src="/studo-logo.png" alt="Studo" className="w-9 h-9 rounded-xl shrink-0 object-cover" />
+        <span className="font-display font-bold text-lg grad-text">Studo</span>
       </div>
       <nav className="flex-1 flex flex-col gap-1 overflow-y-auto">
         {NAV.map((item) => (
@@ -57,7 +55,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
       <div className="px-3 pt-4 space-y-2 text-[11px]" style={{ color: 'var(--ink-soft)' }}>
-        <div>Student Hub v1.0</div>
+        <div>Studo v1.0</div>
         <a
           href="https://www.linkedin.com/in/bhuvaneshs07"
           target="_blank"

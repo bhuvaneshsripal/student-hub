@@ -7,8 +7,9 @@ import { Modal } from '../components/ui/Modal';
 import { ProgressBar } from '../components/ui/ProgressBar';
 import {
   useAttendanceStore, attendancePercent, classesNeededForSafe, classesCanMissSafe, attendanceStatus,
-  classesNeededForThreshold, classesCanMissForThreshold, SAFE_THRESHOLD,
+  classesNeededForThreshold, classesCanMissForThreshold, SAFE_THRESHOLD, semesterDayCounts,
 } from '../store/attendanceStore';
+import { CalendarRange } from 'lucide-react';
 import { useToastStore } from '../store/toastStore';
 import { exportAttendancePdf } from '../utils/pdf';
 
@@ -16,11 +17,12 @@ const STATUS_COLOR = { safe: 'var(--success)', warning: 'var(--warning)', danger
 const STATUS_LABEL = { safe: 'Safe', warning: 'Warning', danger: 'Danger' };
 
 export default function Attendance() {
-  const { subjects, addSubject, removeSubject, markToday } = useAttendanceStore();
+  const { subjects, addSubject, removeSubject, markToday, semesterStart, semesterEnd, setSemesterDates } = useAttendanceStore();
   const push = useToastStore((s) => s.push);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ name: '', total: 0, attended: 0 });
   const [calc, setCalc] = useState({ total: 40, attended: 32, target: SAFE_THRESHOLD });
+  const semDays = semesterDayCounts(semesterStart, semesterEnd);
 
   const overall = subjects.length ? subjects.reduce((a, s) => a + attendancePercent(s), 0) / subjects.length : 0;
 
@@ -69,6 +71,40 @@ export default function Attendance() {
           <Button size="sm" icon={<Plus size={14} />} onClick={() => setModalOpen(true)}>Add Subject</Button>
         </div>
       </div>
+
+      <Card>
+        <CardHeader title="Semester Duration" icon={<CalendarRange size={16} />} />
+        <p className="text-xs mb-4" style={{ color: 'var(--ink-soft)' }}>
+          Set your semester's start and end date to track how many days are left.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <label className="block">
+            <span className="text-xs font-medium block mb-1" style={{ color: 'var(--ink-soft)' }}>Semester start date</span>
+            <input
+              type="date" value={semesterStart}
+              onChange={(e) => setSemesterDates(e.target.value, semesterEnd)}
+              className="calc-input"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium block mb-1" style={{ color: 'var(--ink-soft)' }}>Semester end date</span>
+            <input
+              type="date" value={semesterEnd}
+              onChange={(e) => setSemesterDates(semesterStart, e.target.value)}
+              className="calc-input"
+            />
+          </label>
+        </div>
+        {semDays && (
+          <div className="rounded-2xl p-4 flex flex-wrap gap-x-6 gap-y-2" style={{ background: 'var(--bg)', border: '1px solid var(--line)' }}>
+            <p className="text-sm" style={{ color: 'var(--ink)' }}><b>{semDays.totalDays}</b> total days</p>
+            <p className="text-sm" style={{ color: 'var(--ink)' }}><b>{semDays.workingDays}</b> working days (excl. Sundays)</p>
+          </div>
+        )}
+        {semesterStart && semesterEnd && !semDays && (
+          <p className="text-xs" style={{ color: 'var(--danger)' }}>End date must be on or after the start date.</p>
+        )}
+      </Card>
 
       <Card>
         <CardHeader title="Bunk Class Calculator" icon={<Calculator size={16} />} />
@@ -154,7 +190,7 @@ export default function Attendance() {
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--ink-soft)' }} />
               <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--ink-soft)' }} />
               <Tooltip contentStyle={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 12, fontSize: 12 }} />
-              <Bar dataKey="pct" radius={[8, 8, 0, 0]} fill="#F2C94C" />
+              <Bar dataKey="pct" radius={[8, 8, 0, 0]} fill="var(--blue)" />
             </BarChart>
           </ResponsiveContainer>
         </Card>

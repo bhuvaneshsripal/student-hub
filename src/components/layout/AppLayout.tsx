@@ -38,7 +38,7 @@ export function AppLayout() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div className="fixed inset-0 z-[60] md:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
             <motion.div
               initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}

@@ -6,6 +6,11 @@ import { useAuthUser } from './hooks/useAuthUser';
 import Login from './pages/Login';
 import { useEffect } from "react";
 import { useTimetableStore } from "./store/timetableStore";
+import { useCgpaStore } from "./store/cgpaStore";
+import { useProductivityStore } from "./store/productivityStore";
+import { useAttendanceStore } from "./store/attendanceStore";
+import { usePlacementStore } from "./store/placementStore";
+
 
 // Route-level code splitting: each page ships as its own chunk and is only
 // downloaded when the user actually navigates there, keeping the initial
@@ -53,12 +58,45 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const syncTimetable = useTimetableStore((s) => s.sync);
+  const { user } = useAuthUser();
 
-  useEffect(() => {
-    syncTimetable();
-  }, []);
-  
+  const syncTimetable = useTimetableStore((s) => s.sync);
+  const syncCgpa = useCgpaStore((s) => s.sync);
+  const syncTasks = useProductivityStore((s) => s.syncTasks);
+  const syncNotes = useProductivityStore((s) => s.syncNotes);
+  const syncAttendance = useAttendanceStore((s) => s.sync);
+  const syncPlacement = usePlacementStore((s) => s.sync);
+  const syncPomodoro = useProductivityStore(
+  (s) => s.syncPomodoro
+);
+  const syncCalendar = useProductivityStore((s) => s.syncCalendar);
+
+useEffect(() => {
+  if (!user) return;
+
+  syncTimetable();
+  syncCgpa();
+  syncTasks();
+  syncNotes();
+  syncAttendance();
+  syncPlacement();
+  syncPomodoro();
+  syncCalendar();
+
+
+}, [
+  user,
+  syncTimetable,
+  syncCgpa,
+  syncTasks,
+  syncNotes,
+  syncAttendance,
+  syncPlacement,
+  syncPomodoro,
+  syncCalendar,
+
+]);
+
   return (
     <BrowserRouter>
       <CloudSync />

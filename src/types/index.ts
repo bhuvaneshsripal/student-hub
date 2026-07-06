@@ -80,10 +80,8 @@ export interface CalendarEvent {
 export interface TopicProgress {
   id: string;
   name: string;
-  difficulty?: 'Easy' | 'Medium' | 'Hard';
-  estMinutes?: number;
-  practiceQuestions?: number;
   done: boolean;
+  difficulty?: "easy" | "medium" | "hard";
 }
 
 export interface PlatformStat {

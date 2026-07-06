@@ -38,11 +38,33 @@ export default function Dashboard() {
   const studyStreak = useProductivityStore((s) => s.studyStreak());
   const weeklyHours = useProductivityStore((s) => s.weeklyStudyHours());
   const readiness = usePlacementStore((s) => s.readinessScore());
+  const syncAttendance = useAttendanceStore((s) => s.sync);
+  const syncPlacement = usePlacementStore((s) => s.sync);
+
+  const syncNotes = useProductivityStore((s) => s.syncNotes);
+  const syncTasks = useProductivityStore((s) => s.syncTasks);
+  const syncPomodoro = useProductivityStore((s) => s.syncPomodoro);
+  const syncCalendar = useProductivityStore((s) => s.syncCalendar);
 
   useEffect(() => {
+    syncAttendance();
+    syncPlacement();
+
+    syncNotes();
+    syncTasks();
+    syncPomodoro();
+    syncCalendar();
+
     const t = setTimeout(() => setLoading(false), 500);
-    const clock = setInterval(() => setNow(new Date()), 1000 * 30);
-    return () => { clearTimeout(t); clearInterval(clock); };
+
+    const clock = setInterval(() => {
+      setNow(new Date());
+    }, 30000);
+
+    return () => {
+      clearTimeout(t);
+      clearInterval(clock);
+    };
   }, []);
 
   const todayName = DAYS[(now.getDay() + 6) % 7] ?? null; // Sunday not in DAYS

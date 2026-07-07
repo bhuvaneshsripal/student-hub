@@ -32,7 +32,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex flex-col h-full py-6 px-4">
       <div className="flex items-center gap-2.5 px-2 mb-8">
         <img src="/studo-logo.png" alt="Studo" className="w-9 h-9 rounded-xl shrink-0 object-cover" />
-        <span className="font-display font-bold text-lg grad-text">Studo</span>
+        <span className="font-display font-bold text-lg brand-text">Studo</span>
       </div>
       <nav className="flex-1 flex flex-col gap-1 overflow-y-auto">
         {NAV.map((item) => (
@@ -44,10 +44,10 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             className={({ isActive }) => clsx(
               'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
               isActive
-                ? 'bg-gradient-to-r from-[var(--blue)] to-[var(--purple)] text-white shadow-md shadow-[var(--blue)]/20'
+                ? 'bg-gradient-to-r from-[var(--blue)] to-[var(--purple)] text-[#171200] shadow-md shadow-[var(--blue)]/20'
                 : 'hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
             )}
-            style={({ isActive }: any) => ({ color: isActive ? '#fff' : 'var(--ink)' })}
+            style={({ isActive }: any) => ({ color: isActive ? '#171200' : 'var(--ink)' })}
           >
             <item.icon size={17} />
             {item.label}

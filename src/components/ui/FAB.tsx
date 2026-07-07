@@ -42,7 +42,7 @@ export function FAB() {
             style={{ color: 'var(--ink)', background: 'var(--glass-solid)' }}
           >
             {a.label}
-            <span className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] text-white">
+            <span className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] text-[#171200]">
               <a.icon size={15} />
             </span>
           </motion.button>
@@ -52,7 +52,7 @@ export function FAB() {
         onClick={() => setOpen((o) => !o)}
         whileTap={{ scale: 0.92 }}
         animate={{ rotate: open ? 45 : 0 }}
-        className="w-14 h-14 rounded-full bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] text-white flex items-center justify-center shadow-xl shadow-[var(--purple)]/30"
+        className="w-14 h-14 rounded-full bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] text-[#171200] flex items-center justify-center shadow-xl shadow-[var(--purple)]/30"
       >
         {open ? <X size={22} /> : <Plus size={22} />}
       </motion.button>

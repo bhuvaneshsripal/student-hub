@@ -7,7 +7,6 @@ import { Topbar } from './Topbar';
 import { FAB } from '../ui/FAB';
 import { ToastContainer } from '../ui/Toast';
 import { OnboardingModal } from './OnboardingModal';
-import { DataRestoreNotice } from './DataRestoreNotice';
 import { useSettingsStore } from '../../store/settingsStore';
 
 export function AppLayout() {
@@ -60,7 +59,6 @@ export function AppLayout() {
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar onMenuClick={() => setMobileOpen(true)} />
         <main className="flex-1 p-4 pb-28 md:p-6 md:pb-6 max-w-[1400px] w-full mx-auto">
-          <DataRestoreNotice />
           <Outlet />
         </main>
       </div>

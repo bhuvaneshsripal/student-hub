@@ -33,7 +33,7 @@ export function CardHeader({ title, subtitle, icon, action }: { title: string; s
     <div className="flex items-start justify-between mb-4">
       <div className="flex items-center gap-3">
         {icon && (
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] text-white shrink-0">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] text-[#171200] shrink-0">
             {icon}
           </div>
         )}

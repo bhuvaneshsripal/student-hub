@@ -84,7 +84,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div className="space-y-5">
       <div>
         <h1 className="font-display text-2xl font-bold" style={{ color: 'var(--ink)' }}>Settings</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>Personalize the app and manage your data.</p>

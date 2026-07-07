@@ -61,7 +61,7 @@ export default function Todo() {
               className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border"
               style={{ background: t.done ? 'linear-gradient(135deg, var(--blue), var(--purple))' : 'transparent', borderColor: t.done ? 'transparent' : 'var(--line)' }}
             >
-              {t.done && <Check size={14} className="text-white" />}
+              {t.done && <Check size={14} className="text-[#171200]" />}
             </button>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)', textDecoration: t.done ? 'line-through' : 'none', opacity: t.done ? 0.55 : 1 }}>{t.title}</p>

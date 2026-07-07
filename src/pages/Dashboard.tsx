@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Clock, Flame, BookOpen, TrendingUp, CalendarClock, ClipboardCheck,
-  Rocket, ListChecks, ArrowRight,
+  Rocket, ListChecks, ArrowRight, Pencil, Check,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardHeader } from '../components/ui/Card';
@@ -29,6 +29,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
   const profile = useSettingsStore((s) => s.profile);
+  const updateProfile = useSettingsStore((s) => s.updateProfile);
   const classes = useTimetableStore((s) => s.classes);
   const semesters = useCgpaStore((s) => s.semesters);
   const attendanceSubjects = useAttendanceStore((s) => s.subjects);
@@ -45,6 +46,19 @@ export default function Dashboard() {
   const syncTasks = useProductivityStore((s) => s.syncTasks);
   const syncPomodoro = useProductivityStore((s) => s.syncPomodoro);
   const syncCalendar = useProductivityStore((s) => s.syncCalendar);
+
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+
+  function startEditName() {
+    setNameDraft(profile.name.trim());
+    setEditingName(true);
+  }
+
+  function saveName() {
+    updateProfile({ name: nameDraft.trim() });
+    setEditingName(false);
+  }
 
   useEffect(() => {
     syncAttendance();
@@ -89,8 +103,41 @@ export default function Dashboard() {
       {/* Welcome header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: 'var(--ink)' }}>
-            {greeting()}, <span className="grad-text">{profile.name.trim() ? profile.name.trim().split(' ')[0] : 'there'}</span>
+          <h1 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 flex-wrap" style={{ color: 'var(--ink)' }}>
+            <span>{greeting()},</span>
+            {editingName ? (
+              <span className="inline-flex items-center gap-1.5">
+                <input
+                  autoFocus
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
+                  placeholder="Your name"
+                  className="font-display text-2xl md:text-3xl font-bold bg-transparent outline-none border-none max-w-[10ch] sm:max-w-[16ch]"
+                  style={{ color: 'var(--ink)' }}
+                />
+                <button
+                  onClick={saveName}
+                  aria-label="Save name"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: 'var(--accent-solid)', color: 'var(--purple)' }}
+                >
+                  <Check size={14} />
+                </button>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="grad-text">{profile.name.trim() ? profile.name.trim().split(' ')[0] : 'Student'}</span>
+                <button
+                  onClick={startEditName}
+                  aria-label="Edit name"
+                  className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                  style={{ color: 'var(--ink-soft)' }}
+                >
+                  <Pencil size={13} />
+                </button>
+              </span>
+            )}
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>
             {now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • {now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true })}
@@ -98,7 +145,7 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl glass">
           <Flame size={16} style={{ color: 'var(--warning)' }} />
-          <span style={{ color: 'var(--ink)' }}><b>{pomodoroSessions.length === 0 ? '-' : studyStreak}</b> day streak</span>
+          <span style={{ color: 'var(--ink)' }}><b>{studyStreak}</b> day streak</span>
         </div>
       </motion.div>
 

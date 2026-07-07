@@ -109,7 +109,7 @@ export function Topbar({
 
         <Link
           to="/profile"
-          className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-white overflow-hidden"
+          className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[#171200] overflow-hidden"
         >
           {profile.avatar ? (
             <img

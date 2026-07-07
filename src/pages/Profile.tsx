@@ -1,8 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Camera, Pencil, Check, Settings as SettingsIcon, ZoomIn, RotateCcw, User, Hash, Building2, GraduationCap, Layers } from 'lucide-react';
+import { Camera, Pencil, Check, Settings as SettingsIcon, ZoomIn, RotateCcw, User, Hash, Building2, GraduationCap, Layers, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSettingsStore } from '../store/settingsStore';
 import { useToastStore } from '../store/toastStore';
+import { auth } from '../firebase';
 
 const OUTPUT_SIZE = 400;
 
@@ -33,7 +34,7 @@ export default function Profile() {
 
   return (
     <div className="space-y-6 w-full max-w-7xl mx-auto px-6">
-      <div className="flex items-center justify-between gap-5 px-8 py-6">
+      <div className="flex items-center justify-between gap-5 py-6">
         <div>
           <h1 className="font-display text-2xl font-bold" style={{ color: 'var(--ink)' }}>Profile</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>Your student information, shown across the app.</p>
@@ -51,7 +52,7 @@ export default function Profile() {
 
       <div className="flex items-center gap-5">
         <div className="relative">
-          <div className="w-25 h-25 rounded-2xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-white font-display font-bold text-2xl overflow-hidden">
+          <div className="w-25 h-25 rounded-2xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[#171200] font-display font-bold text-2xl overflow-hidden">
             {profile.avatar ? (
               <img src={profile.avatar} alt="avatar" className="w-full h-full object-cover" />
             ) : (
@@ -112,6 +113,7 @@ export default function Profile() {
           <FieldRow label="Department" value={profile.department} onChange={(v) => updateProfile({ department: v })} />
           <FieldRow label="Year" value={profile.year} onChange={(v) => updateProfile({ year: v })} />
           <FieldRow label="Semester" value={profile.semester} onChange={(v) => updateProfile({ semester: v })} />
+          <FieldRowStatic label="Email" value={auth.currentUser?.email ?? ''} />
         </div>
       </div>
 
@@ -161,8 +163,8 @@ function FieldRow({ label, value, onChange }: { label: string; value: string; on
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setDraft(value); setEditing(false); } }}
             onBlur={save}
-            className="w-full px-0 py-1 text-[15px] outline-none bg-transparent border-b"
-            style={{ color: 'var(--ink)', borderColor: 'var(--purple)' }}
+            className="w-full px-0 py-1 text-[15px] outline-none border-none bg-transparent"
+            style={{ color: 'var(--ink)' }}
           />
         ) : (
           <p className="text-[15px] truncate" style={{ color: value ? 'var(--ink)' : 'var(--ink-soft)' }}>
@@ -177,6 +179,26 @@ function FieldRow({ label, value, onChange }: { label: string; value: string; on
       >
         {editing ? <Check size={16} style={{ color: 'var(--success)' }} /> : <Pencil size={15} style={{ color: 'var(--ink-soft)' }} />}
       </button>
+    </div>
+  );
+}
+
+/** Read-only box — shows the account's login email. No edit affordance. */
+function FieldRowStatic({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-4 px-5 py-4" style={{ background: 'var(--bg-elev)' }}>
+      <div
+        className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: 'var(--accent-solid)' }}
+      >
+        <Mail size={16} style={{ color: 'var(--accent-solid-border)' }} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <span className="text-xs font-medium block mb-1" style={{ color: 'var(--ink-soft)' }}>{label}</span>
+        <p className="text-[15px] truncate" style={{ color: value ? 'var(--ink)' : 'var(--ink-soft)' }}>
+          {value || 'Not signed in'}
+        </p>
+      </div>
     </div>
   );
 }
@@ -287,7 +309,7 @@ function CropModal({ src, onCancel, onSave }: { src: string; onCancel: () => voi
           </button>
           <button
             onClick={save}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-[var(--blue)] to-[var(--purple)]"
+            className="px-4 py-2 rounded-xl text-sm font-medium text-[#171200] bg-gradient-to-r from-[var(--blue)] to-[var(--purple)]"
           >
             Save
           </button>

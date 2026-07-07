@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #F5F7FF;
-  --bg-elev: #FFFFFF;
-  --ink: #12142B;
-  --ink-soft: #63678C;
-  --line: rgba(37, 42, 89, 0.1);
-  --glass: rgba(255, 255, 255, 0.65);
-  --glass-solid: #FFFFFF;
-  --glass-border: rgba(59, 91, 255, 0.25);
-  --blue: #3B5BFF;
-  --purple: #8B3AFF;
+  --bg: #FFFFFF;
+  --bg-elev: #FFFEF5;
+  --ink: #1A1A1A;
+  --ink-soft: #6B6555;
+  --line: rgba(196, 152, 13, 0.18);
+  --glass: rgba(255, 251, 232, 0.68);
+  --glass-solid: #FFFDF2;
+  --glass-border: rgba(255, 193, 7, 0.35);
+  --blue: #F2A900;
+  --purple: #FFC107;
   --cyan: #06B6D4;
   --pink: #EC4899;
   --green: #10B981;
@@ -18,31 +18,33 @@
   --success: #17B26A;
   --warning: #FF9F1C;
   --danger: #F04438;
-  --shadow: 0 10px 40px -12px rgba(59, 91, 255, 0.3);
-  --accent-solid: #E7ECFF;
-  --accent-solid-border: #3B5BFF;
-  --search-bg: rgba(255, 255, 255, 0.6);
-  --search-border: rgba(59, 91, 255, 0.35);
-  --nav-panel: rgba(255, 255, 255, 0.97);
-  --nav-panel-border: rgba(59, 91, 255, 0.2);
+  --shadow: 0 10px 40px -12px rgba(212, 160, 20, 0.35);
+  --accent-solid: #FFF6D8;
+  --accent-solid-border: #FFC107;
+  --search-bg: rgba(255, 251, 232, 0.6);
+  --search-border: rgba(255, 193, 7, 0.35);
+  --nav-panel: rgba(255, 253, 242, 0.97);
+  --nav-panel-border: rgba(255, 193, 7, 0.25);
 }
 
 .dark {
   --bg: #000000;
   --bg-elev: #0D0D0D;
-  --ink: #F4F5FF;
-  --ink-soft: #9195C2;
-  --line: rgba(255, 255, 255, 0.1);
+  --ink: #F7F1DE;
+  --ink-soft: #B9AF8E;
+  --line: rgba(255, 214, 79, 0.12);
   --glass: rgba(13, 13, 13, 0.65);
   --glass-solid: #0D0D0D;
-  --glass-border: rgba(139, 58, 255, 0.25);
-  --shadow: 0 10px 40px -12px rgba(139, 58, 255, 0.4);
-  --accent-solid: #1A1625;
-  --accent-solid-border: #8B3AFF;
+  --glass-border: rgba(255, 193, 7, 0.25);
+  --blue: #FFD54A;
+  --purple: #FFC107;
+  --shadow: 0 10px 40px -12px rgba(255, 193, 7, 0.3);
+  --accent-solid: #201A05;
+  --accent-solid-border: #FFC107;
   --search-bg: rgba(255, 255, 255, 0.08);
-  --search-border: rgba(139, 58, 255, 0.4);
+  --search-border: rgba(255, 193, 7, 0.4);
   --nav-panel: rgba(5, 5, 5, 0.97);
-  --nav-panel-border: rgba(139, 58, 255, 0.2);
+  --nav-panel-border: rgba(255, 193, 7, 0.2);
 }
 
 * {
@@ -71,11 +73,11 @@ body {
 
 .bg-mesh {
   background-image:
-    radial-gradient(at 15% 10%, rgba(59, 91, 255, 0.16) 0px, transparent 55%),
-    radial-gradient(at 85% 0%, rgba(139, 58, 255, 0.14) 0px, transparent 50%),
-    radial-gradient(at 90% 90%, rgba(236, 72, 153, 0.10) 0px, transparent 50%),
-    linear-gradient(to right, rgba(59, 91, 255, 0.10) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(59, 91, 255, 0.10) 1px, transparent 1px);
+    radial-gradient(at 15% 10%, rgba(255, 193, 7, 0.18) 0px, transparent 55%),
+    radial-gradient(at 85% 0%, rgba(242, 169, 0, 0.14) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, rgba(255, 213, 74, 0.12) 0px, transparent 50%),
+    linear-gradient(to right, rgba(196, 152, 13, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(196, 152, 13, 0.08) 1px, transparent 1px);
   background-size: auto, auto, auto, 26px 26px, 26px 26px;
   background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
   background-attachment: fixed;
@@ -83,11 +85,11 @@ body {
 
 .dark .bg-mesh {
   background-image:
-    radial-gradient(at 15% 10%, rgba(59, 91, 255, 0.05) 0px, transparent 55%),
-    radial-gradient(at 85% 0%, rgba(139, 58, 255, 0.045) 0px, transparent 50%),
-    radial-gradient(at 90% 90%, rgba(236, 72, 153, 0.03) 0px, transparent 50%),
-    linear-gradient(to right, rgba(139, 58, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(139, 58, 255, 0.05) 1px, transparent 1px);
+    radial-gradient(at 15% 10%, rgba(255, 193, 7, 0.06) 0px, transparent 55%),
+    radial-gradient(at 85% 0%, rgba(255, 213, 74, 0.05) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, rgba(242, 169, 0, 0.04) 0px, transparent 50%),
+    linear-gradient(to right, rgba(255, 193, 7, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 193, 7, 0.05) 1px, transparent 1px);
   background-size: auto, auto, auto, 26px 26px, 26px 26px;
 }
 
@@ -151,8 +153,15 @@ body {
   color: transparent;
 }
 
+.brand-text {
+  background: linear-gradient(100deg, #3B82F6, #8B5CF6, #EC4899, #FFC107);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 .grad-ring {
-  background: conic-gradient(from 180deg, var(--blue), var(--purple), var(--pink), var(--blue));
+  background: conic-gradient(from 180deg, var(--blue), var(--purple), var(--warning), var(--blue));
 }
 
 .no-scroll { overflow: hidden !important; height: 100%; }

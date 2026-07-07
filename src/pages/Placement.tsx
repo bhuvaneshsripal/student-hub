@@ -163,7 +163,7 @@ function TopicGroup({
                     {topic.done && (
                       <Check
                         size={13}
-                        className="text-white"
+                        className="text-[#171200]"
                       />
                     )}
                   </span>
@@ -326,7 +326,7 @@ export default function Placement() {
                   {item.done && (
                     <Check
                       size={13}
-                      className="text-white"
+                      className="text-[#171200]"
                     />
                   )}
                 </span>

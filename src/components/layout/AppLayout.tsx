@@ -8,14 +8,19 @@ import { FAB } from '../ui/FAB';
 import { ToastContainer } from '../ui/Toast';
 import { OnboardingModal } from './OnboardingModal';
 import { useSettingsStore } from '../../store/settingsStore';
+import { applyTheme } from '../../lib/applyTheme';
+import { useClassReminders } from '../../hooks/useClassReminders';
 
 export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useSettingsStore((s) => s.theme);
+  const colorScheme = useSettingsStore((s) => s.colorScheme);
+
+  useClassReminders();
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-  }, [theme]);
+    applyTheme(theme, colorScheme);
+  }, [theme, colorScheme]);
 
   // Lock body scroll while the mobile drawer is open so the page behind it
   // doesn't scroll and bleed through/overlay the menu.

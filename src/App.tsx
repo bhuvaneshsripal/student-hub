@@ -24,6 +24,7 @@ const Notes = lazy(() => import('./pages/Notes'));
 const Todo = lazy(() => import('./pages/Todo'));
 const Pomodoro = lazy(() => import('./pages/Pomodoro'));
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
+const ExamFinder = lazy(() => import('./pages/ExamFinder'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 
@@ -178,6 +179,14 @@ useEffect(() => {
             element={
               <Suspense fallback={<PageFallback />}>
                 <CalendarPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/exam-finder"
+            element={
+              <Suspense fallback={<PageFallback />}>
+                <ExamFinder />
               </Suspense>
             }
           />

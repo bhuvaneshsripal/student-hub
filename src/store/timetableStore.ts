@@ -13,6 +13,7 @@ interface TimetableState {
   addClass: (c: Omit<ClassBlock, "id">) => Promise<void>;
   updateClass: (id: string, c: Partial<ClassBlock>) => Promise<void>;
   removeClass: (id: string) => Promise<void>;
+  restoreClass: (c: ClassBlock) => Promise<void>;
   hasConflict: (c: Omit<ClassBlock, "id"> & { id?: string }) => boolean;
   sync: () => Promise<void>;
 }
@@ -50,6 +51,13 @@ export const useTimetableStore = create<TimetableState>((set, get) => ({
 
   removeClass: async (id) => {
     const classes = get().classes.filter((x) => x.id !== id);
+
+    set({ classes });
+    await saveTimetable(classes);
+  },
+
+  restoreClass: async (c) => {
+    const classes = [...get().classes.filter((x) => x.id !== c.id), c];
 
     set({ classes });
     await saveTimetable(classes);

@@ -2,49 +2,90 @@
 
 :root {
   --bg: #FFFFFF;
-  --bg-elev: #FFFEF5;
-  --ink: #1A1A1A;
-  --ink-soft: #6B6555;
-  --line: rgba(196, 152, 13, 0.18);
-  --glass: rgba(255, 251, 232, 0.68);
-  --glass-solid: #FFFDF2;
-  --glass-border: rgba(255, 193, 7, 0.35);
-  --blue: #F2A900;
-  --purple: #FFC107;
-  --cyan: #06B6D4;
+  --bg-elev: #F7FAFF;
+  --ink: #0F172A;
+  --ink-soft: #64748B;
+  --line: rgba(37, 99, 235, 0.16);
+  --glass: rgba(239, 246, 255, 0.68);
+  --glass-solid: #FFFFFF;
+  --glass-border: rgba(59, 130, 246, 0.30);
+  --blue: #2563EB;
+  --purple: #3B82F6;
+  --cyan: #0EA5E9;
   --pink: #EC4899;
   --green: #10B981;
   --orange: #FF9F1C;
   --success: #17B26A;
-  --warning: #FF9F1C;
+  --warning: #F59E0B;
   --danger: #F04438;
-  --shadow: 0 10px 40px -12px rgba(212, 160, 20, 0.35);
-  --accent-solid: #FFF6D8;
-  --accent-solid-border: #FFC107;
-  --search-bg: rgba(255, 251, 232, 0.6);
-  --search-border: rgba(255, 193, 7, 0.35);
-  --nav-panel: rgba(255, 253, 242, 0.97);
-  --nav-panel-border: rgba(255, 193, 7, 0.25);
+  --shadow: 0 10px 40px -12px rgba(37, 99, 235, 0.30);
+  --accent-solid: #EFF6FF;
+  --accent-solid-border: #3B82F6;
+  --search-bg: rgba(239, 246, 255, 0.6);
+  --search-border: rgba(59, 130, 246, 0.30);
+  --nav-panel: rgba(255, 255, 255, 0.97);
+  --nav-panel-border: rgba(59, 130, 246, 0.20);
+  /* Text/icon color placed ON TOP of the --blue → --purple gradient
+     (buttons, active nav link, avatars, FAB, checkmarks). Must stay high
+     contrast against whichever accent gradient is active. White reads
+     clearly against the blue/purple gradient; the yellow scheme below
+     overrides this to a dark ink color instead. */
+  --on-accent: #FFFFFF;
 }
 
 .dark {
   --bg: #000000;
-  --bg-elev: #0D0D0D;
-  --ink: #F7F1DE;
-  --ink-soft: #B9AF8E;
-  --line: rgba(255, 214, 79, 0.12);
-  --glass: rgba(13, 13, 13, 0.65);
-  --glass-solid: #0D0D0D;
-  --glass-border: rgba(255, 193, 7, 0.25);
-  --blue: #FFD54A;
-  --purple: #FFC107;
-  --shadow: 0 10px 40px -12px rgba(255, 193, 7, 0.3);
-  --accent-solid: #201A05;
-  --accent-solid-border: #FFC107;
-  --search-bg: rgba(255, 255, 255, 0.08);
-  --search-border: rgba(255, 193, 7, 0.4);
-  --nav-panel: rgba(5, 5, 5, 0.97);
-  --nav-panel-border: rgba(255, 193, 7, 0.2);
+  --bg-elev: #0A0E1A;
+  --ink: #E7ECF7;
+  --ink-soft: #94A3B8;
+  --line: rgba(59, 130, 246, 0.18);
+  --glass: rgba(9, 13, 24, 0.65);
+  --glass-solid: #0A0E1A;
+  --glass-border: rgba(59, 130, 246, 0.30);
+  --blue: #3B82F6;
+  --purple: #60A5FA;
+  --shadow: 0 10px 40px -12px rgba(59, 130, 246, 0.35);
+  --accent-solid: #0B1A33;
+  --accent-solid-border: #3B82F6;
+  --search-bg: rgba(255, 255, 255, 0.07);
+  --search-border: rgba(59, 130, 246, 0.35);
+  --nav-panel: rgba(3, 6, 14, 0.97);
+  --nav-panel-border: rgba(59, 130, 246, 0.22);
+}
+
+/* Yellow color scheme — swaps the accent hue used across gradients,
+   borders, and highlights (buttons, active nav link, FAB, avatars, rings)
+   while keeping the light/dark mode variables (--bg, --ink, etc.)
+   untouched, so yellow can be combined with either light or dark mode. */
+.theme-yellow {
+  --blue: #F5A800;
+  --purple: #FFCB3D;
+  --line: rgba(217, 119, 6, 0.18);
+  --glass: rgba(255, 251, 235, 0.68);
+  --glass-border: rgba(245, 168, 0, 0.35);
+  --shadow: 0 10px 40px -12px rgba(217, 119, 6, 0.30);
+  --accent-solid: #FFFBEB;
+  --accent-solid-border: #F5A800;
+  --search-bg: rgba(255, 251, 235, 0.6);
+  --search-border: rgba(245, 168, 0, 0.30);
+  --nav-panel-border: rgba(245, 168, 0, 0.20);
+  /* Dark text reads clearly against the yellow/gold gradient. */
+  --on-accent: #171200;
+}
+
+.theme-yellow.dark {
+  --blue: #F5A800;
+  --purple: #FBBF24;
+  --line: rgba(245, 168, 0, 0.18);
+  --glass: rgba(24, 18, 3, 0.65);
+  --glass-border: rgba(245, 168, 0, 0.30);
+  --shadow: 0 10px 40px -12px rgba(245, 168, 0, 0.35);
+  --accent-solid: #241C05;
+  --accent-solid-border: #F5A800;
+  --search-bg: rgba(255, 255, 255, 0.07);
+  --search-border: rgba(245, 168, 0, 0.35);
+  --nav-panel-border: rgba(245, 168, 0, 0.22);
+  --on-accent: #171200;
 }
 
 * {
@@ -73,11 +114,11 @@ body {
 
 .bg-mesh {
   background-image:
-    radial-gradient(at 15% 10%, rgba(255, 193, 7, 0.18) 0px, transparent 55%),
-    radial-gradient(at 85% 0%, rgba(242, 169, 0, 0.14) 0px, transparent 50%),
-    radial-gradient(at 90% 90%, rgba(255, 213, 74, 0.12) 0px, transparent 50%),
-    linear-gradient(to right, rgba(196, 152, 13, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(196, 152, 13, 0.08) 1px, transparent 1px);
+    radial-gradient(at 15% 10%, rgba(37, 99, 235, 0.16) 0px, transparent 55%),
+    radial-gradient(at 85% 0%, rgba(59, 130, 246, 0.13) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, rgba(96, 165, 250, 0.11) 0px, transparent 50%),
+    linear-gradient(to right, rgba(37, 99, 235, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(37, 99, 235, 0.07) 1px, transparent 1px);
   background-size: auto, auto, auto, 26px 26px, 26px 26px;
   background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
   background-attachment: fixed;
@@ -85,11 +126,33 @@ body {
 
 .dark .bg-mesh {
   background-image:
-    radial-gradient(at 15% 10%, rgba(255, 193, 7, 0.06) 0px, transparent 55%),
-    radial-gradient(at 85% 0%, rgba(255, 213, 74, 0.05) 0px, transparent 50%),
-    radial-gradient(at 90% 90%, rgba(242, 169, 0, 0.04) 0px, transparent 50%),
-    linear-gradient(to right, rgba(255, 193, 7, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 193, 7, 0.05) 1px, transparent 1px);
+    radial-gradient(at 15% 10%, rgba(59, 130, 246, 0.08) 0px, transparent 55%),
+    radial-gradient(at 85% 0%, rgba(96, 165, 250, 0.06) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
+    linear-gradient(to right, rgba(59, 130, 246, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(59, 130, 246, 0.06) 1px, transparent 1px);
+  background-size: auto, auto, auto, 26px 26px, 26px 26px;
+}
+
+.theme-yellow .bg-mesh {
+  background-image:
+    radial-gradient(at 15% 10%, rgba(245, 168, 0, 0.16) 0px, transparent 55%),
+    radial-gradient(at 85% 0%, rgba(255, 203, 61, 0.13) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, rgba(251, 191, 36, 0.11) 0px, transparent 50%),
+    linear-gradient(to right, rgba(217, 119, 6, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(217, 119, 6, 0.07) 1px, transparent 1px);
+  background-size: auto, auto, auto, 26px 26px, 26px 26px;
+  background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
+  background-attachment: fixed;
+}
+
+.theme-yellow.dark .bg-mesh {
+  background-image:
+    radial-gradient(at 15% 10%, rgba(245, 168, 0, 0.08) 0px, transparent 55%),
+    radial-gradient(at 85% 0%, rgba(251, 191, 36, 0.06) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, rgba(217, 119, 6, 0.05) 0px, transparent 50%),
+    linear-gradient(to right, rgba(245, 168, 0, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(245, 168, 0, 0.06) 1px, transparent 1px);
   background-size: auto, auto, auto, 26px 26px, 26px 26px;
 }
 
@@ -154,7 +217,7 @@ body {
 }
 
 .brand-text {
-  background: linear-gradient(100deg, #3B82F6, #8B5CF6, #EC4899, #FFC107);
+  background: linear-gradient(100deg, #1D4ED8, #2563EB, #3B82F6, #60A5FA);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -165,6 +228,39 @@ body {
 }
 
 .no-scroll { overflow: hidden !important; height: 100%; }
+
+/* Smooth native momentum scrolling on iOS/mobile Safari, and a general
+   perf hint so the browser doesn't repaint more than it needs to while
+   the page scrolls. */
+html {
+  scroll-behavior: smooth;
+}
+
+body, main, .overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* `background-attachment: fixed` (used by .bg-mesh) forces the browser to
+   recompute/repaint that background layer on every scroll frame, which is
+   the single biggest cause of laggy/slow scrolling on mobile GPUs —
+   especially combined with the backdrop-filter blur used by .glass cards.
+   Desktop compositors handle it fine, so we only relax it on small/touch
+   screens where it actually matters. */
+@media (max-width: 768px) {
+  .bg-mesh,
+  .dark .bg-mesh,
+  .theme-yellow .bg-mesh,
+  .theme-yellow.dark .bg-mesh {
+    background-attachment: scroll;
+  }
+
+  /* Backdrop blur is expensive per-frame on mobile GPUs; a lighter blur
+     keeps the glass look while scrolling stays smooth. */
+  .glass {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+}
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }

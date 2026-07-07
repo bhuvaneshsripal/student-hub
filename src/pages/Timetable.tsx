@@ -1,19 +1,38 @@
 import { useMemo, useState } from 'react';
-import { Plus, Search, Printer, FileDown, Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Printer, FileDown, Pencil, Trash2, AlertTriangle, ClipboardPaste, Check } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { SearchBox } from '../components/ui/SearchBox';
 import { useTimetableStore } from '../store/timetableStore';
+import { useSettingsStore } from '../store/settingsStore';
 import { useToastStore } from '../store/toastStore';
+import { useConfirm } from '../hooks/useConfirm';
 import { DAYS, type ClassBlock, type Day } from '../types';
 import { exportTimetablePdf } from '../utils/pdf';
+import { parseMyCamuTimetable } from '../utils/mycamuParser';
 
 const COLORS = ['#3B5BFF', '#8B3AFF', '#06B6D4', '#EC4899', '#10B981', '#FF9F1C', '#F04438'];
 
-const emptyForm = { day: 'Monday' as Day, subject: '', faculty: '', room: '', start: '09:00', end: '10:00', color: COLORS[0] };
+// Manual "Add Class" entries default to an 8–9 AM slot.
+const emptyForm = { day: 'Monday' as Day, subject: '', faculty: '', room: '', start: '08:00', end: '09:00', color: COLORS[0] };
+
+/** Deterministically map a subject name to one of the palette colors, so the
+ * same subject always gets the same color whether it's pasted from MyCamu
+ * multiple times or already exists elsewhere in the timetable. */
+function colorForSubjectName(subject: string): string {
+  const key = subject.trim().toLowerCase();
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  }
+  return COLORS[hash % COLORS.length];
+}
 
 export default function Timetable() {
-  const { classes, addClass, updateClass, removeClass, hasConflict } = useTimetableStore();
+  const { classes, addClass, updateClass, removeClass, restoreClass, hasConflict } = useTimetableStore();
+  const colorScheme = useSettingsStore((s) => s.colorScheme);
   const push = useToastStore((s) => s.push);
+  const { confirm, dialog } = useConfirm();
 
   const [dayFilter, setDayFilter] = useState<Day | 'All'>('All');
   const [query, setQuery] = useState('');
@@ -21,6 +40,11 @@ export default function Timetable() {
   const [editing, setEditing] = useState<ClassBlock | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [dragId, setDragId] = useState<string | null>(null);
+
+  const [importOpen, setImportOpen] = useState(false);
+  const [importDay, setImportDay] = useState<Day>('Monday');
+  const [importText, setImportText] = useState('');
+  const [importPreview, setImportPreview] = useState<ReturnType<typeof parseMyCamuTimetable>>([]);
 
   const filtered = useMemo(() => {
     return classes.filter((c) => {
@@ -57,6 +81,37 @@ export default function Timetable() {
     setModalOpen(false);
   }
 
+  function openImport() {
+    setImportText('');
+    setImportPreview([]);
+    setImportDay('Monday');
+    setImportOpen(true);
+  }
+
+  function handleImportTextChange(text: string) {
+    setImportText(text);
+    setImportPreview(parseMyCamuTimetable(text));
+  }
+
+  async function confirmImport() {
+    if (importPreview.length === 0) return;
+    let added = 0;
+    let skipped = 0;
+    for (let i = 0; i < importPreview.length; i++) {
+      const row = importPreview[i];
+      const candidate = { day: importDay, subject: row.subject, faculty: row.faculty, room: '', start: row.start, end: row.end, color: colorForSubjectName(row.subject) };
+      if (hasConflict(candidate)) {
+        skipped++;
+        continue;
+      }
+      await addClass(candidate);
+      added++;
+    }
+    if (added > 0) push(`Imported ${added} class${added === 1 ? '' : 'es'} for ${importDay}${skipped ? ` (${skipped} skipped — clashing times)` : ''}`, 'success');
+    else push('Nothing imported — all rows clashed with existing classes', 'error');
+    setImportOpen(false);
+  }
+
   function onDrop(day: Day) {
     if (!dragId) return;
     const c = classes.find((x) => x.id === dragId);
@@ -78,21 +133,15 @@ export default function Timetable() {
           <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>Drag a class card to another day to reschedule it.</p>
         </div>
         <div className="flex items-center gap-2 no-print">
+          <Button variant="outline" size="sm" icon={<ClipboardPaste size={14} />} onClick={openImport}>Paste from MyCamu</Button>
           <Button variant="outline" size="sm" icon={<Printer size={14} />} onClick={() => window.print()}>Print</Button>
-          <Button variant="outline" size="sm" icon={<FileDown size={14} />} onClick={() => exportTimetablePdf(classes)}>Export PDF</Button>
+          <Button variant="outline" size="sm" icon={<FileDown size={14} />} onClick={() => exportTimetablePdf(classes, colorScheme)}>Export PDF</Button>
           <Button size="sm" icon={<Plus size={14} />} onClick={() => openAdd()}>Add Class</Button>
         </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 no-print">
-        <div className="flex items-center gap-2 rounded-xl px-3 py-2 glass flex-1 max-w-sm">
-          <Search size={15} style={{ color: 'var(--ink-soft)' }} />
-          <input
-            value={query} onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search subject or faculty..."
-            className="bg-transparent outline-none text-sm w-full" style={{ color: 'var(--ink)' }}
-          />
-        </div>
+        <SearchBox value={query} onChange={setQuery} placeholder="Search subject or faculty..." />
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {(['All', ...DAYS] as const).map((d) => (
             <button
@@ -150,7 +199,13 @@ export default function Timetable() {
                           <Pencil size={12} style={{ color: 'var(--ink-soft)' }} />
                         </button>
                         <button
-                          onClick={() => { removeClass(c.id); push('Class removed', 'info'); }}
+                          onClick={() => {
+                            confirm({ title: 'Delete class?', message: `"${c.subject}" on ${c.day} will be permanently removed.` }, () => {
+                              const deleted = c;
+                              removeClass(c.id);
+                              push('Class removed', 'info', { onUndo: () => restoreClass(deleted) });
+                            });
+                          }}
                           aria-label="Remove class"
                           className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.1]"
                         >
@@ -220,7 +275,68 @@ export default function Timetable() {
         </div>
       </Modal>
 
+      <Modal open={importOpen} onClose={() => setImportOpen(false)} title="Paste from MyCamu" width="max-w-2xl">
+        <div className="space-y-3">
+          <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>
+            Open your timetable on MyCamu, select and copy a day's schedule, then paste it below.
+            Each class should look like two lines — subject, then time and faculty.
+          </p>
+          <Field label="Day this schedule belongs to">
+            <select value={importDay} onChange={(e) => setImportDay(e.target.value as Day)} className="input">
+              {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </Field>
+          <Field label="Pasted timetable text">
+            <textarea
+              value={importText}
+              onChange={(e) => handleImportTextChange(e.target.value)}
+              placeholder={'Object Oriented Programming using Java ( 19AI307 )\n8:00 AM - 9:00 AM ( 60 min ) Magitha Nirmala Tennyson'}
+              rows={8}
+              className="input font-mono text-xs"
+            />
+          </Field>
+
+          {importText && (
+            importPreview.length > 0 ? (
+              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--line)' }}>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left" style={{ color: 'var(--ink-soft)', background: 'var(--bg)' }}>
+                      <th className="px-3 py-2 font-medium">Subject</th>
+                      <th className="px-3 py-2 font-medium">Time</th>
+                      <th className="px-3 py-2 font-medium">Faculty</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importPreview.map((row, i) => (
+                      <tr key={i} className="border-t" style={{ borderColor: 'var(--line)' }}>
+                        <td className="px-3 py-2" style={{ color: 'var(--ink)' }}>{row.subject}</td>
+                        <td className="px-3 py-2 font-mono text-xs" style={{ color: 'var(--ink-soft)' }}>{row.start}–{row.end}</td>
+                        <td className="px-3 py-2" style={{ color: 'var(--ink-soft)' }}>{row.faculty}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs p-2 rounded-lg" style={{ background: 'rgba(240,68,56,0.1)', color: 'var(--danger)' }}>
+                <AlertTriangle size={13} /> Couldn't detect any classes in that text — check the format matches the example.
+              </div>
+            )
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setImportOpen(false)}>Cancel</Button>
+            <Button icon={<Check size={14} />} onClick={confirmImport} disabled={importPreview.length === 0}>
+              Import {importPreview.length > 0 ? `${importPreview.length} class${importPreview.length === 1 ? '' : 'es'}` : ''}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       <style>{`.input { width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.75rem; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 0.875rem; outline: none; } .input:focus { border-color: var(--purple); }`}</style>
+
+      {dialog}
     </div>
   );
 }

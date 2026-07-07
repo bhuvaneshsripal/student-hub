@@ -163,7 +163,7 @@ function TopicGroup({
                     {topic.done && (
                       <Check
                         size={13}
-                        className="text-[#171200]"
+                        className="text-[var(--on-accent)]"
                       />
                     )}
                   </span>
@@ -227,6 +227,7 @@ export default function Placement() {
           <CardHeader
             title="Overall Readiness Score"
             icon={<Trophy size={16} />}
+            color="purple"
           />
 
           <ProgressRing
@@ -240,6 +241,7 @@ export default function Placement() {
           <CardHeader
             title="Achievement Badges"
             icon={<Award size={16} />}
+            color="pink"
           />
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -326,7 +328,7 @@ export default function Placement() {
                   {item.done && (
                     <Check
                       size={13}
-                      className="text-[#171200]"
+                      className="text-[var(--on-accent)]"
                     />
                   )}
                 </span>

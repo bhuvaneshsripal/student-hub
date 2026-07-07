@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { useProductivityStore } from '../store/productivityStore';
 import { useToastStore } from '../store/toastStore';
+import { useConfirm } from '../hooks/useConfirm';
 import type { CalendarEvent } from '../types';
 
 const TYPE_COLOR: Record<CalendarEvent['type'], string> = {
@@ -12,8 +13,9 @@ const TYPE_COLOR: Record<CalendarEvent['type'], string> = {
 };
 
 export default function CalendarPage() {
-  const { events, addEvent, removeEvent } = useProductivityStore();
+  const { events, addEvent, removeEvent, restoreEvent } = useProductivityStore();
   const push = useToastStore((s) => s.push);
+  const { confirm, dialog } = useConfirm();
   const [cursor, setCursor] = useState(new Date());
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ title: '', date: '', type: 'event' as CalendarEvent['type'] });
@@ -98,7 +100,17 @@ export default function CalendarPage() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs font-mono" style={{ color: 'var(--ink-soft)' }}>{e.date}</span>
-                <button onClick={() => removeEvent(e.id)}><Trash2 size={14} style={{ color: 'var(--danger)' }} /></button>
+                <button
+                  onClick={() => {
+                    confirm({ title: 'Delete event?', message: `"${e.title}" will be permanently deleted.` }, () => {
+                      const deleted = e;
+                      removeEvent(e.id);
+                      push('Event removed', 'info', { onUndo: () => restoreEvent(deleted) });
+                    });
+                  }}
+                >
+                  <Trash2 size={14} style={{ color: 'var(--danger)' }} />
+                </button>
               </div>
             </div>
           ))}
@@ -124,6 +136,8 @@ export default function CalendarPage() {
         </div>
         <style>{`.input { width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.75rem; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 0.875rem; outline: none; }`}</style>
       </Modal>
+
+      {dialog}
     </div>
   );
 }

@@ -32,6 +32,7 @@ interface CgpaState {
 
   addSemester: (name: string) => Promise<void>;
   removeSemester: (id: string) => Promise<void>;
+  restoreSemester: (semester: Semester) => Promise<void>;
 
   addSubject: (
     semId: string,
@@ -49,6 +50,11 @@ interface CgpaState {
   removeSubject: (
     semId: string,
     subId: string
+  ) => Promise<void>;
+
+  restoreSubject: (
+    semId: string,
+    subject: Subject
   ) => Promise<void>;
 
   importSubjects: (
@@ -102,6 +108,16 @@ export const useCgpaStore = create<CgpaState>()((set, get) => ({
     set({ semesters });
     await saveCgpa(semesters);
   },
+
+  restoreSemester: async (semester) => {
+    const semesters = [
+      ...get().semesters.filter((x) => x.id !== semester.id),
+      semester,
+    ];
+
+    set({ semesters });
+    await saveCgpa(semesters);
+  },
     addSubject: async (semId, name, credits, grade) => {
     const semesters = get().semesters.map((sem) =>
       sem.id === semId
@@ -146,6 +162,20 @@ export const useCgpaStore = create<CgpaState>()((set, get) => ({
         ? {
             ...sem,
             subjects: sem.subjects.filter((sub) => sub.id !== subId),
+          }
+        : sem
+    );
+
+    set({ semesters });
+    await saveCgpa(semesters);
+  },
+
+  restoreSubject: async (semId, subject) => {
+    const semesters = get().semesters.map((sem) =>
+      sem.id === semId
+        ? {
+            ...sem,
+            subjects: [...sem.subjects.filter((sub) => sub.id !== subject.id), subject],
           }
         : sem
     );

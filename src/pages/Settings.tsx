@@ -1,10 +1,14 @@
 import { useRef, useState } from 'react';
-import { Download, Upload, Trash2, Moon, Eye } from 'lucide-react';
+import { Download, Upload, Trash2, Moon, Eye, BellRing, BellOff } from 'lucide-react';
 import { Card, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
+import { ColorSchemeToggle } from '../components/ui/ColorSchemeToggle';
+import { Switch } from '../components/ui/Switch';
 import { useToastStore } from '../store/toastStore';
+import { useConfirm } from '../hooks/useConfirm';
+import { useSettingsStore } from '../store/settingsStore';
 
 const STORAGE_KEYS = [
   'studenthub-settings', 'studenthub-timetable', 'studenthub-cgpa',
@@ -22,11 +26,15 @@ function buildBackupData() {
 
 export default function Settings() {
   const push = useToastStore((s) => s.push);
+  const { confirm, dialog } = useConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewJson, setPreviewJson] = useState('');
   const [previewMode, setPreviewMode] = useState<'export' | 'import'>('export');
   const [pendingRestoreData, setPendingRestoreData] = useState<Record<string, unknown> | null>(null);
+
+  const classReminders = useSettingsStore((s) => s.classReminders);
+  const toggleClassReminders = useSettingsStore((s) => s.toggleClassReminders);
 
   function openExportPreview() {
     setPreviewMode('export');
@@ -77,10 +85,14 @@ export default function Settings() {
   }
 
   function clearAll() {
-    if (!confirm('This will erase all Studo data on this device. Continue?')) return;
-    STORAGE_KEYS.forEach((k) => localStorage.removeItem(k));
-    push('All data cleared — reloading...', 'info');
-    setTimeout(() => window.location.reload(), 800);
+    confirm(
+      { title: 'Clear all data?', message: 'This will erase all Studo data on this device. This cannot be undone.', confirmLabel: 'Clear Data' },
+      () => {
+        STORAGE_KEYS.forEach((k) => localStorage.removeItem(k));
+        push('All data cleared — reloading...', 'info');
+        setTimeout(() => window.location.reload(), 800);
+      }
+    );
   }
 
   return (
@@ -91,7 +103,7 @@ export default function Settings() {
       </div>
 
       <Card>
-        <CardHeader title="Appearance" icon={<Moon size={16} />} />
+        <CardHeader title="Appearance" icon={<Moon size={16} />} color="purple" />
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Dark Mode</p>
@@ -99,6 +111,41 @@ export default function Settings() {
           </div>
           <ThemeToggle />
         </div>
+        <div className="h-px my-4" style={{ background: 'var(--line)' }} />
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Theme Color</p>
+            <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Choose the app's accent color scheme.</p>
+          </div>
+          <ColorSchemeToggle />
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title="Class Reminders" icon={<BellRing size={16} />} color="blue" />
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Notify before class</p>
+            <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Get a browser notification 15 minutes before each class in your timetable.</p>
+          </div>
+          <Switch
+            checked={classReminders}
+            label="Toggle class reminders"
+            onIcon={<BellRing size={13} className="text-[var(--blue)]" />}
+            offIcon={<BellOff size={13} className="text-[var(--ink-soft)]" />}
+            onChange={async () => {
+              if (!classReminders && 'Notification' in window && Notification.permission === 'default') {
+                await Notification.requestPermission();
+              }
+              toggleClassReminders();
+            }}
+          />
+        </div>
+        {classReminders && 'Notification' in window && Notification.permission === 'denied' && (
+          <p className="text-xs mt-3" style={{ color: 'var(--danger)' }}>
+            Notifications are blocked for this site in your browser settings, so reminders won't show up until you allow them.
+          </p>
+        )}
       </Card>
 
       <Card>
@@ -152,6 +199,8 @@ export default function Settings() {
         <p className="text-sm mb-4" style={{ color: 'var(--ink-soft)' }}>Permanently erase all locally stored data for this app.</p>
         <Button variant="danger" icon={<Trash2 size={14} />} onClick={clearAll}>Clear All Data</Button>
       </Card>
+
+      {dialog}
     </div>
   );
 }

@@ -86,6 +86,10 @@ interface AttendanceState {
     id: string
   ) => Promise<void>;
 
+  restoreSubject: (
+    subject: AttendanceSubject
+  ) => Promise<void>;
+
   markToday: (
     id: string,
     present: boolean
@@ -166,6 +170,17 @@ export const useAttendanceStore =
             get().subjects.filter(
               (subject) => subject.id !== id
             );
+
+          set({ subjects });
+
+          await saveAttendance(subjects);
+        },
+
+        restoreSubject: async (subject) => {
+          const subjects = [
+            ...get().subjects.filter((s) => s.id !== subject.id),
+            subject,
+          ];
 
           set({ subjects });
 

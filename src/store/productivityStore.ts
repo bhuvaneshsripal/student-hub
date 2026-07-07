@@ -56,6 +56,10 @@ interface ProductivityState {
     id: string
   ) => Promise<void>;
 
+  restoreNote: (
+    note: Note
+  ) => Promise<void>;
+
   // ===================== TASKS =====================
 
   tasks: Task[];
@@ -76,6 +80,10 @@ interface ProductivityState {
 
   removeTask: (
     id: string
+  ) => Promise<void>;
+
+  restoreTask: (
+    task: Task
   ) => Promise<void>;
 
   // ===================== POMODORO =====================
@@ -115,6 +123,10 @@ interface ProductivityState {
 
   removeEvent: (
     id: string
+  ) => Promise<void>;
+
+  restoreEvent: (
+    event: CalendarEvent
   ) => Promise<void>;
 }
 
@@ -180,6 +192,14 @@ export const useProductivityStore =
 
     await saveNotes(notes);
   },
+
+  restoreNote: async (note) => {
+    const notes = [note, ...get().notes.filter((n) => n.id !== note.id)];
+
+    set({ notes });
+
+    await saveNotes(notes);
+  },
     // ====================================================
   // TASKS
   // ====================================================
@@ -237,6 +257,14 @@ export const useProductivityStore =
     const tasks = get().tasks.filter(
       (task) => task.id !== id
     );
+
+    set({ tasks });
+
+    await saveTasks(tasks);
+  },
+
+  restoreTask: async (task) => {
+    const tasks = [task, ...get().tasks.filter((t) => t.id !== task.id)];
 
     set({ tasks });
 
@@ -363,6 +391,14 @@ export const useProductivityStore =
     const events = get().events.filter(
       (event) => event.id !== id
     );
+
+    set({ events });
+
+    await saveCalendar(events);
+  },
+
+  restoreEvent: async (event) => {
+    const events = [...get().events.filter((e) => e.id !== event.id), event];
 
     set({ events });
 

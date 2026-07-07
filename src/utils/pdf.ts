@@ -7,21 +7,45 @@ import {
   attendancePercent, attendanceStatus, classesCanMissSafe, classesNeededForSafe, SAFE_THRESHOLD,
 } from '../store/attendanceStore';
 
-// Brand palette used across the PDF exports
-const BRAND_YELLOW: [number, number, number] = [242, 201, 76];
-const BRAND_INK: [number, number, number] = [22, 22, 14];
-const BRAND_INK_SOFT: [number, number, number] = [107, 107, 94];
+export type PdfColorScheme = 'blue' | 'yellow';
+
+// Brand palette used across the PDF exports — matches the app's own
+// blue/yellow color scheme so the report you export looks like the theme
+// you're currently using.
+const BRANDS: Record<PdfColorScheme, {
+  accent: [number, number, number];
+  onAccent: [number, number, number];
+  rowTint: [number, number, number];
+  subtitleTint: [number, number, number];
+}> = {
+  blue: {
+    accent: [37, 99, 235],       // #2563EB
+    onAccent: [255, 255, 255],
+    rowTint: [239, 246, 255],    // #EFF6FF
+    subtitleTint: [219, 234, 254],
+  },
+  yellow: {
+    accent: [245, 168, 0],       // #F5A800
+    onAccent: [23, 18, 0],       // dark text reads better on yellow
+    rowTint: [255, 251, 235],    // #FFFBEB
+    subtitleTint: [82, 58, 0],
+  },
+};
+
+const BRAND_INK: [number, number, number] = [15, 23, 42];
+const BRAND_INK_SOFT: [number, number, number] = [100, 116, 139];
 const STATUS_RGB: Record<'safe' | 'warning' | 'danger', [number, number, number]> = {
   safe: [23, 178, 106],
   warning: [245, 166, 35],
   danger: [240, 68, 56],
 };
 
-function drawHeader(doc: jsPDF, title: string, subtitle: string) {
+function drawHeader(doc: jsPDF, brand: PdfColorScheme, title: string, subtitle: string) {
+  const b = BRANDS[brand];
   const pageWidth = doc.internal.pageSize.getWidth();
-  doc.setFillColor(...BRAND_YELLOW);
+  doc.setFillColor(...b.accent);
   doc.rect(0, 0, pageWidth, 34, 'F');
-  doc.setTextColor(...BRAND_INK);
+  doc.setTextColor(...b.onAccent);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.text('Studo', 14, 15);
@@ -29,18 +53,19 @@ function drawHeader(doc: jsPDF, title: string, subtitle: string) {
   doc.setFont('helvetica', 'normal');
   doc.text(title, 14, 24);
   doc.setFontSize(8.5);
-  doc.setTextColor(60, 55, 30);
+  doc.setTextColor(...b.subtitleTint);
   doc.text(subtitle, 14, 30);
   doc.setTextColor(...BRAND_INK);
 }
 
-function drawFooter(doc: jsPDF) {
+function drawFooter(doc: jsPDF, brand: PdfColorScheme) {
+  const b = BRANDS[brand];
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    doc.setDrawColor(...BRAND_YELLOW);
+    doc.setDrawColor(...b.accent);
     doc.setLineWidth(0.6);
     doc.line(14, pageHeight - 14, pageWidth - 14, pageHeight - 14);
     doc.setFontSize(8);
@@ -50,9 +75,10 @@ function drawFooter(doc: jsPDF) {
   }
 }
 
-export function exportTimetablePdf(classes: ClassBlock[]) {
+export function exportTimetablePdf(classes: ClassBlock[], scheme: PdfColorScheme = 'blue') {
+  const b = BRANDS[scheme];
   const doc = new jsPDF();
-  drawHeader(doc, 'Weekly Timetable', `Generated on ${new Date().toLocaleDateString()}`);
+  drawHeader(doc, scheme, 'Weekly Timetable', `Generated on ${new Date().toLocaleDateString()}`);
   const rows = classes
     .slice()
     .sort((a, b) => a.day.localeCompare(b.day) || a.start.localeCompare(b.start))
@@ -61,17 +87,18 @@ export function exportTimetablePdf(classes: ClassBlock[]) {
     startY: 40,
     head: [['Day', 'Time', 'Subject', 'Faculty', 'Room']],
     body: rows,
-    headStyles: { fillColor: BRAND_YELLOW, textColor: BRAND_INK, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [255, 251, 235] },
+    headStyles: { fillColor: b.accent, textColor: b.onAccent, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: b.rowTint },
     styles: { fontSize: 9, cellPadding: 4 },
   });
-  drawFooter(doc);
+  drawFooter(doc, scheme);
   doc.save('timetable.pdf');
 }
 
-export function exportCgpaPdf(semesters: Semester[]) {
+export function exportCgpaPdf(semesters: Semester[], scheme: PdfColorScheme = 'blue') {
+  const b = BRANDS[scheme];
   const doc = new jsPDF();
-  drawHeader(doc, 'CGPA Report', `Generated on ${new Date().toLocaleDateString()}`);
+  drawHeader(doc, scheme, 'CGPA Report', `Generated on ${new Date().toLocaleDateString()}`);
   let y = 42;
   semesters.forEach((sem) => {
     doc.setFontSize(12);
@@ -82,30 +109,31 @@ export function exportCgpaPdf(semesters: Semester[]) {
       startY: y + 4,
       head: [['Subject', 'Credits', 'Grade', 'Points']],
       body: sem.subjects.map((s) => [s.name, String(s.credits), s.grade, String(GRADE_POINTS[s.grade])]),
-      headStyles: { fillColor: BRAND_YELLOW, textColor: BRAND_INK, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [255, 251, 235] },
+      headStyles: { fillColor: b.accent, textColor: b.onAccent, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: b.rowTint },
       styles: { fontSize: 9, cellPadding: 4 },
       margin: { left: 14 },
     });
     y = (doc as any).lastAutoTable.finalY + 12;
   });
-  drawFooter(doc);
+  drawFooter(doc, scheme);
   doc.save('cgpa-report.pdf');
 }
 
-export function exportAttendancePdf(subjects: AttendanceSubject[]) {
+export function exportAttendancePdf(subjects: AttendanceSubject[], scheme: PdfColorScheme = 'blue') {
+  const b = BRANDS[scheme];
   const doc = new jsPDF();
   const overall = subjects.length
     ? subjects.reduce((a, s) => a + attendancePercent(s), 0) / subjects.length
     : 0;
   const overallStatus = attendanceStatus(overall);
 
-  drawHeader(doc, 'Attendance Report', `Generated on ${new Date().toLocaleDateString()}  ·  Safe threshold: ${SAFE_THRESHOLD}%`);
+  drawHeader(doc, scheme, 'Attendance Report', `Generated on ${new Date().toLocaleDateString()}  ·  Safe threshold: ${SAFE_THRESHOLD}%`);
 
   // Overall summary card
   const pageWidth = doc.internal.pageSize.getWidth();
   const cardY = 42;
-  doc.setDrawColor(...BRAND_YELLOW);
+  doc.setDrawColor(...b.accent);
   doc.setLineWidth(0.6);
   doc.roundedRect(14, cardY, pageWidth - 28, 22, 3, 3, 'S');
   doc.setFont('helvetica', 'bold');
@@ -153,8 +181,8 @@ export function exportAttendancePdf(subjects: AttendanceSubject[]) {
     startY: cardY + 30,
     head: [['Subject', 'Attended', 'Total', 'Attendance', 'Status', `To stay ${SAFE_THRESHOLD}% safe`]],
     body: rows,
-    headStyles: { fillColor: BRAND_YELLOW, textColor: BRAND_INK, fontStyle: 'bold', halign: 'center' },
-    alternateRowStyles: { fillColor: [255, 251, 235] },
+    headStyles: { fillColor: b.accent, textColor: b.onAccent, fontStyle: 'bold', halign: 'center' },
+    alternateRowStyles: { fillColor: b.rowTint },
     styles: { fontSize: 9, cellPadding: 4, halign: 'center' },
     columnStyles: { 0: { halign: 'left', fontStyle: 'bold' }, 5: { halign: 'left' } },
     didParseCell: (data) => {
@@ -167,6 +195,6 @@ export function exportAttendancePdf(subjects: AttendanceSubject[]) {
     },
   });
 
-  drawFooter(doc);
+  drawFooter(doc, scheme);
   doc.save(`attendance-report-${new Date().toISOString().slice(0, 10)}.pdf`);
 }

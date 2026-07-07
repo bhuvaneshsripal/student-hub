@@ -11,14 +11,18 @@ import {
 } from '../store/attendanceStore';
 import { CalendarRange } from 'lucide-react';
 import { useToastStore } from '../store/toastStore';
+import { useSettingsStore } from '../store/settingsStore';
+import { useConfirm } from '../hooks/useConfirm';
 import { exportAttendancePdf } from '../utils/pdf';
 
 const STATUS_COLOR = { safe: 'var(--success)', warning: 'var(--warning)', danger: 'var(--danger)' };
 const STATUS_LABEL = { safe: 'Safe', warning: 'Warning', danger: 'Danger' };
 
 export default function Attendance() {
-  const { subjects, addSubject, removeSubject, markToday, semesterStart, semesterEnd, setSemesterDates } = useAttendanceStore();
+  const { subjects, addSubject, removeSubject, restoreSubject, markToday, semesterStart, semesterEnd, setSemesterDates } = useAttendanceStore();
+  const colorScheme = useSettingsStore((s) => s.colorScheme);
   const push = useToastStore((s) => s.push);
+  const { confirm, dialog } = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ name: '', total: 0, attended: 0 });
   const [calc, setCalc] = useState({ total: 40, attended: 32, target: SAFE_THRESHOLD });
@@ -55,7 +59,7 @@ export default function Attendance() {
 
   function handleExportPdf() {
     if (!subjects.length) { push('Add at least one subject before exporting', 'error'); return; }
-    exportAttendancePdf(subjects);
+    exportAttendancePdf(subjects, colorScheme);
     push('Attendance PDF downloaded', 'success');
   }
 
@@ -73,7 +77,7 @@ export default function Attendance() {
       </div>
 
       <Card>
-        <CardHeader title="Semester Duration" icon={<CalendarRange size={16} />} />
+        <CardHeader title="Semester Duration" icon={<CalendarRange size={16} />} color="blue" />
         <p className="text-xs mb-4" style={{ color: 'var(--ink-soft)' }}>
           Set your semester's start and end date to track how many days are left.
         </p>
@@ -107,7 +111,7 @@ export default function Attendance() {
       </Card>
 
       <Card>
-        <CardHeader title="Bunk Class Calculator" icon={<Calculator size={16} />} />
+        <CardHeader title="Bunk Class Calculator" icon={<Calculator size={16} />} color="orange" />
         <p className="text-xs mb-4" style={{ color: 'var(--ink-soft)' }}>
           Try any total / attended / target combination — no need to add a subject first.
         </p>
@@ -211,7 +215,15 @@ export default function Attendance() {
                   <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{ background: `${STATUS_COLOR[status]}1A`, color: STATUS_COLOR[status] }}>
                     {STATUS_LABEL[status]}
                   </span>
-                  <button onClick={() => { removeSubject(s.id); push('Subject removed', 'info'); }}>
+                  <button
+                    onClick={() => {
+                      confirm({ title: 'Delete subject?', message: `"${s.name}" and its attendance record will be permanently deleted.` }, () => {
+                        const deleted = s;
+                        removeSubject(s.id);
+                        push('Subject removed', 'info', { onUndo: () => restoreSubject(deleted) });
+                      });
+                    }}
+                  >
                     <Trash2 size={14} style={{ color: 'var(--ink-soft)' }} />
                   </button>
                 </div>
@@ -258,6 +270,8 @@ export default function Attendance() {
         <style>{`.input { width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.75rem; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 0.875rem; outline: none; }`}</style>
       </Modal>
       <style>{`.calc-input { width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.75rem; border: 1px solid var(--line); background: var(--bg-elev); color: var(--ink); font-size: 0.875rem; outline: none; } .calc-input:focus { border-color: var(--blue); }`}</style>
+
+      {dialog}
     </div>
   );
 }

@@ -22,6 +22,18 @@ export function ToastContainer() {
             >
               <Icon size={18} style={{ color: COLORS[t.variant] }} className="shrink-0" />
               <span className="text-sm flex-1" style={{ color: 'var(--ink)' }}>{t.message}</span>
+              {t.onUndo && (
+                <button
+                  onClick={() => {
+                    t.onUndo?.();
+                    dismiss(t.id);
+                  }}
+                  className="text-xs font-semibold shrink-0 px-2 py-1 rounded-lg hover:opacity-80"
+                  style={{ color: 'var(--blue)' }}
+                >
+                  Undo
+                </button>
+              )}
               <button onClick={() => dismiss(t.id)}>
                 <X size={14} style={{ color: 'var(--ink-soft)' }} />
               </button>

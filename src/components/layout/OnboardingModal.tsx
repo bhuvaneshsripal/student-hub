@@ -32,7 +32,7 @@ export function OnboardingModal() {
             className="relative w-full max-w-lg glass rounded-2xl p-6 max-h-[85vh] overflow-y-auto"
           >
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[#171200] shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[var(--on-accent)] shrink-0">
                 <Bot size={20} />
               </div>
               <div>
@@ -56,7 +56,7 @@ export function OnboardingModal() {
               <button
                 onClick={submit}
                 disabled={!form.name.trim()}
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-[#171200] bg-gradient-to-r from-[var(--blue)] to-[var(--purple)] shadow-lg shadow-[var(--blue)]/25 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-[var(--on-accent)] bg-gradient-to-r from-[var(--blue)] to-[var(--purple)] shadow-lg shadow-[var(--blue)]/25 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Get Started
               </button>

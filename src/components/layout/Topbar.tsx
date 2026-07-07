@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Bell, Menu, User, LogOut } from "lucide-react";
+import { Bell, Menu, Bot, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 
@@ -109,7 +109,7 @@ export function Topbar({
 
         <Link
           to="/profile"
-          className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[#171200] overflow-hidden"
+          className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[var(--on-accent)] overflow-hidden"
         >
           {profile.avatar ? (
             <img
@@ -125,7 +125,7 @@ export function Topbar({
               .slice(0, 2)
               .join("")
           ) : (
-            <User size={16} />
+            <Bot size={18} />
           )}
         </Link>
 

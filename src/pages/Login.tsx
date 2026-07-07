@@ -27,7 +27,7 @@ import { auth, db, googleProvider } from "../firebase";
 import { useNavigate } from "react-router-dom";
 
 const FEATURES = [
-  { title: "Timetable", subtitle: "Smart Management", icon: Calendar, bg: "#FFC107" },
+  { title: "Timetable", subtitle: "Smart Management", icon: Calendar, bg: "#2563EB" },
   { title: "CGPA", subtitle: "Smart Management", icon: GraduationCap, bg: "#6EC6FF" },
 ];
 

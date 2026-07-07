@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Clock, Flame, BookOpen, TrendingUp, CalendarClock, ClipboardCheck,
   Rocket, ListChecks, ArrowRight, Pencil, Check,
@@ -15,7 +15,8 @@ import { useCgpaStore, overallCGPA } from '../store/cgpaStore';
 import { useAttendanceStore, attendancePercent, SAFE_THRESHOLD } from '../store/attendanceStore';
 import { useProductivityStore } from '../store/productivityStore';
 import { usePlacementStore } from '../store/placementStore';
-import { DAYS } from '../types';
+import { useScrollDirection } from '../hooks/useScrollDirection';
+import { DAYS, type ClassBlock } from '../types';
 
 function greeting() {
   const h = new Date().getHours();
@@ -188,6 +189,7 @@ export default function Dashboard() {
             title="Today's Timetable"
             subtitle={todayName ? todayName : 'No classes on Sunday'}
             icon={<CalendarClock size={17} />}
+            color="blue"
             action={<Link to="/timetable" onClick={(e) => e.stopPropagation()} className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--blue)' }}>View all <ArrowRight size={12} /></Link>}
           />
           {todayClasses.length === 0 ? (
@@ -210,7 +212,7 @@ export default function Dashboard() {
 
         {/* Placement readiness */}
         <Card delay={0.08} className="cursor-pointer" onClick={() => navigate('/placement')}>
-          <CardHeader title="Placement Progress" icon={<Rocket size={17} />} />
+          <CardHeader title="Placement Progress" icon={<Rocket size={17} />} color="purple" />
           <div className="flex flex-col items-center gap-3">
             <ProgressRing value={readiness} label="Ready" />
             <Link to="/placement" onClick={(e) => e.stopPropagation()} className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--blue)' }}>
@@ -223,7 +225,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Upcoming exams / assignments */}
         <Card delay={0.1} className="cursor-pointer" onClick={() => navigate('/calendar')}>
-          <CardHeader title="Upcoming Exams & Assignments" icon={<CalendarClock size={17} />} />
+          <CardHeader title="Upcoming Exams & Assignments" icon={<CalendarClock size={17} />} color="orange" />
           {upcomingExams.length === 0 && pendingTasks.length === 0 ? (
             <p className="text-sm py-4 text-center" style={{ color: 'var(--ink-soft)' }}>Nothing on the horizon.</p>
           ) : (
@@ -246,7 +248,7 @@ export default function Dashboard() {
 
         {/* Quick actions */}
         <Card delay={0.12}>
-          <CardHeader title="Quick Actions" icon={<Clock size={17} />} />
+          <CardHeader title="Quick Actions" icon={<Clock size={17} />} color="teal" />
           <div className="grid grid-cols-2 gap-2">
             {[
               { to: '/timetable', label: 'Add Class' },
@@ -265,6 +267,42 @@ export default function Dashboard() {
           </div>
         </Card>
       </div>
+
+      <ScrollInfoPopup todayClasses={todayClasses} now={now} />
     </div>
+  );
+}
+
+/** Small floating tip that appears while you scroll down the dashboard and
+ * hides again as soon as you scroll back up (or reach the top) — a quick
+ * glance at your next class without needing to keep the Timetable card in
+ * view. */
+function ScrollInfoPopup({ todayClasses, now }: { todayClasses: ClassBlock[]; now: Date }) {
+  const direction = useScrollDirection();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const next = todayClasses.find((c) => {
+    const [h, m] = c.start.split(':').map(Number);
+    return h * 60 + m >= nowMinutes;
+  });
+
+  if (!next) return null;
+
+  return (
+    <AnimatePresence>
+      {direction === 'down' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-40 glass-solid rounded-2xl px-4 py-3 flex items-center gap-3 shadow-xl max-w-[92vw]"
+        >
+          <CalendarClock size={16} style={{ color: 'var(--blue)' }} className="shrink-0" />
+          <p className="text-sm truncate" style={{ color: 'var(--ink)' }}>
+            Up next: <b>{next.subject}</b> at {next.start}{next.room ? ` · ${next.room}` : ''}
+          </p>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

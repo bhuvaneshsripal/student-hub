@@ -1,20 +1,27 @@
 import { useRef, useState } from 'react';
-import { Plus, Trash2, FileDown, GraduationCap, ImagePlus, Loader2, Check } from 'lucide-react';
+import { Plus, Trash2, FileDown, GraduationCap, ImagePlus, Loader2, Check, ChevronDown } from 'lucide-react';
 import { Card, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { useCgpaStore, semesterGPA, overallCGPA } from '../store/cgpaStore';
+import { useSettingsStore } from '../store/settingsStore';
 import { useToastStore } from '../store/toastStore';
+import { useConfirm } from '../hooks/useConfirm';
 import { GRADE_POINTS, type Grade } from '../types';
 import { exportCgpaPdf } from '../utils/pdf';
-import { extractSubjectsFromImage, type ParsedSubject } from '../utils/gradeCardOcr';
+import { extractSubjectsFromFile, type ParsedSubject } from '../utils/gradeCardOcr';
 
 const GRADES: Grade[] = ['S', 'A+', 'A', 'B+', 'B', 'C+', 'C', 'U', 'SA', 'WC'];
 
 export default function CGPA() {
-  const { semesters, addSemester, removeSemester, addSubject, updateSubject, removeSubject, importSubjects } = useCgpaStore();
+  const { semesters, addSemester, removeSemester, restoreSemester, addSubject, updateSubject, removeSubject, restoreSubject, importSubjects } = useCgpaStore();
+  const colorScheme = useSettingsStore((s) => s.colorScheme);
   const push = useToastStore((s) => s.push);
+  const { confirm, dialog } = useConfirm();
   const [newSemName, setNewSemName] = useState('');
+  // Every semester starts collapsed (arrow closed) on every page load/refresh.
+  // A semester only shows its full subject list once the user explicitly expands it.
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const fileRef = useRef<HTMLInputElement>(null);
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
@@ -33,16 +40,20 @@ export default function CGPA() {
     push('Semester added', 'success');
   }
 
-  async function handleImageSelected(e: React.ChangeEvent<HTMLInputElement>) {
+  function toggleExpand(semId: string) {
+    setExpanded((c) => ({ ...c, [semId]: !c[semId] }));
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     setOcrLoading(true);
     setOcrProgress(0);
     try {
-      const rows = await extractSubjectsFromImage(file, setOcrProgress);
+      const rows = await extractSubjectsFromFile(file, setOcrProgress);
       if (rows.length === 0) {
-        push("Couldn't detect any subjects in that image — try a clearer photo", 'error');
+        push("Couldn't detect any subjects in that file — try a clearer scan/photo", 'error');
         return;
       }
       setParsedRows(rows);
@@ -51,7 +62,7 @@ export default function CGPA() {
       setReviewOpen(true);
       push(`Detected ${rows.length} subject(s) — review before adding`, 'success');
     } catch {
-      push('Could not read that image. Please try again.', 'error');
+      push('Could not read that file. Please try again.', 'error');
     } finally {
       setOcrLoading(false);
     }
@@ -85,16 +96,16 @@ export default function CGPA() {
           <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>Track semester GPA and overall CGPA across unlimited semesters.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" icon={<FileDown size={14} />} onClick={() => exportCgpaPdf(semesters)}>Export PDF Report</Button>
+          <Button variant="outline" size="sm" icon={<FileDown size={14} />} onClick={() => exportCgpaPdf(semesters, colorScheme)}>Export PDF Report</Button>
           <Button
             variant="outline" size="sm"
             icon={ocrLoading ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
             onClick={() => fileRef.current?.click()}
             disabled={ocrLoading}
           >
-            {ocrLoading ? `Reading image... ${ocrProgress}%` : 'Add Image (Auto GPA)'}
+            {ocrLoading ? `Reading file... ${ocrProgress}%` : 'Add Image/PDF (Auto GPA)'}
           </Button>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handleImageSelected} className="hidden" />
+          <input ref={fileRef} type="file" accept="image/*,.pdf,application/pdf" onChange={handleFileSelected} className="hidden" />
           <div className="flex gap-2">
             <input
               value={newSemName} onChange={(e) => setNewSemName(e.target.value)}
@@ -132,67 +143,104 @@ export default function CGPA() {
           <Card key={sem.id}>
             <CardHeader
               title={sem.name}
-              subtitle={`GPA: ${semesterGPA(sem.subjects).toFixed(2)} • ${sem.subjects.length} subjects`}
+              subtitle={expanded[sem.id] ? `GPA: ${semesterGPA(sem.subjects).toFixed(2)} • ${sem.subjects.length} subjects` : undefined}
               icon={<GraduationCap size={16} />}
+              color="green"
               action={
-                <button onClick={() => { removeSemester(sem.id); push('Semester removed', 'info'); }}>
-                  <Trash2 size={16} style={{ color: 'var(--danger)' }} />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => toggleExpand(sem.id)}
+                    aria-label={expanded[sem.id] ? 'Collapse semester' : 'Expand semester'}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.08]"
+                  >
+                    <ChevronDown
+                      size={16}
+                      style={{
+                        color: 'var(--ink-soft)',
+                        transform: expanded[sem.id] ? 'none' : 'rotate(-90deg)',
+                        transition: 'transform 0.2s ease',
+                      }}
+                    />
+                  </button>
+                  <button
+                    onClick={() => {
+                      confirm({ title: 'Delete semester?', message: `"${sem.name}" and all its subjects will be permanently deleted.` }, () => {
+                        const deleted = sem;
+                        removeSemester(sem.id);
+                        push('Semester removed', 'info', { onUndo: () => restoreSemester(deleted) });
+                      });
+                    }}
+                  >
+                    <Trash2 size={16} style={{ color: 'var(--danger)' }} />
+                  </button>
+                </div>
               }
             />
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left" style={{ color: 'var(--ink-soft)' }}>
-                    <th className="pb-2 font-medium">Subject</th>
-                    <th className="pb-2 font-medium">Credits</th>
-                    <th className="pb-2 font-medium">Grade</th>
-                    <th className="pb-2 font-medium"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sem.subjects.map((sub) => (
-                    <tr key={sub.id} className="border-t" style={{ borderColor: 'var(--line)' }}>
-                      <td className="py-2 pr-2">
-                        <input
-                          value={sub.name}
-                          onChange={(e) => updateSubject(sem.id, sub.id, { name: e.target.value })}
-                          className="subject-field w-full"
-                        />
-                      </td>
-                      <td className="py-2 pr-2 w-20">
-                        <input
-                          type="number" min={0} value={sub.credits}
-                          onChange={(e) => updateSubject(sem.id, sub.id, { credits: Number(e.target.value) })}
-                          className="subject-field w-full text-center"
-                        />
-                      </td>
-                      <td className="py-2 pr-2 w-32">
-                        <select
-                          value={sub.grade}
-                          onChange={(e) => updateSubject(sem.id, sub.id, { grade: e.target.value as Grade })}
-                          className="subject-field w-full"
-                        >
-                          {GRADES.map((g) => <option key={g} value={g}>{g} ({GRADE_POINTS[g]})</option>)}
-                        </select>
-                      </td>
-                      <td className="py-2 w-8 text-right">
-                        <button onClick={() => removeSubject(sem.id, sub.id)}>
-                          <Trash2 size={14} style={{ color: 'var(--ink-soft)' }} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <button
-              onClick={() => addSubject(sem.id, 'New Subject', 3, 'A')}
-              className="mt-3 flex items-center gap-1.5 text-xs font-medium"
-              style={{ color: 'var(--blue)' }}
-            >
-              <Plus size={13} /> Add subject
-            </button>
+            {expanded[sem.id] && (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left" style={{ color: 'var(--ink-soft)' }}>
+                        <th className="pb-2 font-medium">Subject</th>
+                        <th className="pb-2 font-medium">Credits</th>
+                        <th className="pb-2 font-medium">Grade</th>
+                        <th className="pb-2 font-medium"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sem.subjects.map((sub) => (
+                        <tr key={sub.id} className="border-t" style={{ borderColor: 'var(--line)' }}>
+                          <td className="py-2 pr-2">
+                            <input
+                              value={sub.name}
+                              onChange={(e) => updateSubject(sem.id, sub.id, { name: e.target.value })}
+                              className="subject-field w-full"
+                            />
+                          </td>
+                          <td className="py-2 pr-2 w-20">
+                            <input
+                              type="number" min={0} value={sub.credits}
+                              onChange={(e) => updateSubject(sem.id, sub.id, { credits: Number(e.target.value) })}
+                              className="subject-field w-full text-center"
+                            />
+                          </td>
+                          <td className="py-2 pr-2 w-32">
+                            <select
+                              value={sub.grade}
+                              onChange={(e) => updateSubject(sem.id, sub.id, { grade: e.target.value as Grade })}
+                              className="subject-field w-full"
+                            >
+                              {GRADES.map((g) => <option key={g} value={g}>{g} ({GRADE_POINTS[g]})</option>)}
+                            </select>
+                          </td>
+                          <td className="py-2 w-8 text-right">
+                            <button
+                              onClick={() => {
+                                confirm({ title: 'Delete subject?', message: `"${sub.name || 'This subject'}" will be permanently removed.` }, () => {
+                                  const deleted = sub;
+                                  removeSubject(sem.id, sub.id);
+                                  push('Subject removed', 'info', { onUndo: () => restoreSubject(sem.id, deleted) });
+                                });
+                              }}
+                            >
+                              <Trash2 size={14} style={{ color: 'var(--ink-soft)' }} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button
+                  onClick={() => addSubject(sem.id, '', 0, 'A')}
+                  className="mt-3 flex items-center gap-1.5 text-xs font-medium"
+                  style={{ color: 'var(--blue)' }}
+                >
+                  <Plus size={13} /> Add subject
+                </button>
+              </>
+            )}
           </Card>
         ))}
       </div>
@@ -264,7 +312,13 @@ export default function CGPA() {
                     </select>
                   </td>
                   <td className="px-3 py-2 text-right">
-                    <button onClick={() => removeParsedRow(i)}>
+                    <button
+                      onClick={() => {
+                        confirm({ title: 'Remove row?', message: `"${row.name || 'This row'}" will be removed from the import list.` }, () => {
+                          removeParsedRow(i);
+                        });
+                      }}
+                    >
                       <Trash2 size={14} style={{ color: 'var(--ink-soft)' }} />
                     </button>
                   </td>
@@ -304,6 +358,8 @@ export default function CGPA() {
           box-shadow: 0 0 0 3px rgba(59, 91, 255, 0.15);
         }
       `}</style>
+
+      {dialog}
     </div>
   );
 }

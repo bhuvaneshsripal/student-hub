@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Camera, Pencil, Check, Settings as SettingsIcon, ZoomIn, RotateCcw, User, Hash, Building2, GraduationCap, Layers, Mail } from 'lucide-react';
+import { Camera, Pencil, Check, Settings as SettingsIcon, ZoomIn, RotateCcw, User, Bot, Hash, Building2, GraduationCap, Layers, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSettingsStore } from '../store/settingsStore';
 import { useToastStore } from '../store/toastStore';
@@ -52,11 +52,13 @@ export default function Profile() {
 
       <div className="flex items-center gap-5">
         <div className="relative">
-          <div className="w-25 h-25 rounded-2xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[#171200] font-display font-bold text-2xl overflow-hidden">
+          <div className="w-25 h-25 rounded-2xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[var(--on-accent)] font-display font-bold text-2xl overflow-hidden">
             {profile.avatar ? (
               <img src={profile.avatar} alt="avatar" className="w-full h-full object-cover" />
+            ) : profile.name.trim() ? (
+              profile.name.trim().split(' ').map((n) => n[0]).slice(0, 2).join('')
             ) : (
-              profile.name.trim() ? profile.name.trim().split(' ').map((n) => n[0]).slice(0, 2).join('') : ''
+              <Bot size={32} />
             )}
           </div>
           <div className="absolute -bottom-1 -right-1 flex items-center gap-1">
@@ -309,7 +311,7 @@ function CropModal({ src, onCancel, onSave }: { src: string; onCancel: () => voi
           </button>
           <button
             onClick={save}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-[#171200] bg-gradient-to-r from-[var(--blue)] to-[var(--purple)]"
+            className="px-4 py-2 rounded-xl text-sm font-medium text-[var(--on-accent)] bg-gradient-to-r from-[var(--blue)] to-[var(--purple)]"
           >
             Save
           </button>

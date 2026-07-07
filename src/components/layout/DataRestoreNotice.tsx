@@ -21,7 +21,7 @@ export function DataRestoreNotice() {
             style={{ background: 'var(--accent-solid)' }}
           >
             <div
-              className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] text-[#171200]"
+              className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] text-[var(--on-accent)]"
             >
               <Info size={12} />
             </div>

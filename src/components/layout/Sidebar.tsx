@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarClock, GraduationCap, ClipboardCheck, Rocket,
-  StickyNote, ListTodo, Timer, Calendar, Settings, User,
+  StickyNote, ListTodo, Timer, Calendar, Settings, User, Search,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -23,6 +23,7 @@ const NAV = [
   { to: '/todo', label: 'To-Do', icon: ListTodo },
   { to: '/pomodoro', label: 'Pomodoro', icon: Timer },
   { to: '/calendar', label: 'Calendar', icon: Calendar },
+  { to: '/exam-finder', label: 'Exam Finder', icon: Search },
   { to: '/profile', label: 'Profile', icon: User },
   { to: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -44,10 +45,10 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             className={({ isActive }) => clsx(
               'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
               isActive
-                ? 'bg-gradient-to-r from-[var(--blue)] to-[var(--purple)] text-[#171200] shadow-md shadow-[var(--blue)]/20'
+                ? 'bg-gradient-to-r from-[var(--blue)] to-[var(--purple)] text-[var(--on-accent)] shadow-md shadow-[var(--blue)]/20'
                 : 'hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
             )}
-            style={({ isActive }: any) => ({ color: isActive ? '#171200' : 'var(--ink)' })}
+            style={({ isActive }: any) => ({ color: isActive ? 'var(--on-accent)' : 'var(--ink)' })}
           >
             <item.icon size={17} />
             {item.label}

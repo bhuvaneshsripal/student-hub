@@ -2,15 +2,23 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Profile } from '../types';
 
+export type ColorScheme = 'blue' | 'yellow';
+
 interface SettingsState {
   theme: 'light' | 'dark';
   toggleTheme: () => void;
+  colorScheme: ColorScheme;
+  setColorScheme: (scheme: ColorScheme) => void;
   profile: Profile;
   updateProfile: (p: Partial<Profile>) => void;
   hasOnboarded: boolean;
   completeOnboarding: () => void;
   notificationSound: boolean;
   toggleNotificationSound: () => void;
+  /** Minutes before a scheduled class to fire a browser notification. */
+  classReminderMinutes: number;
+  classReminders: boolean;
+  toggleClassReminders: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -18,6 +26,8 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       theme: 'light',
       toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
+      colorScheme: 'blue',
+      setColorScheme: (scheme) => set({ colorScheme: scheme }),
       profile: {
         name: '',
         registerNumber: '',
@@ -31,6 +41,9 @@ export const useSettingsStore = create<SettingsState>()(
       completeOnboarding: () => set({ hasOnboarded: true }),
       notificationSound: true,
       toggleNotificationSound: () => set((s) => ({ notificationSound: !s.notificationSound })),
+      classReminderMinutes: 15,
+      classReminders: true,
+      toggleClassReminders: () => set((s) => ({ classReminders: !s.classReminders })),
     }),
     { name: 'studenthub-settings' }
   )

@@ -4,6 +4,15 @@ import type { Profile } from '../types';
 
 export type ColorScheme = 'blue' | 'yellow';
 
+const defaultProfile: Profile = {
+  name: '',
+  registerNumber: '',
+  department: '',
+  year: '',
+  semester: '',
+  avatar: '',
+};
+
 interface SettingsState {
   theme: 'light' | 'dark';
   toggleTheme: () => void;
@@ -11,6 +20,16 @@ interface SettingsState {
   setColorScheme: (scheme: ColorScheme) => void;
   profile: Profile;
   updateProfile: (p: Partial<Profile>) => void;
+  /** Resets the profile back to blank defaults. Used when a different
+   * account logs in on this device, so the previous account's cached
+   * profile is never shown — or uploaded — under the new account. */
+  resetProfile: () => void;
+  /** Which Firebase uid the locally-cached `profile` belongs to. Persisted
+   * alongside the profile so CloudSync can tell whether the data sitting
+   * in localStorage is actually this account's, or a leftover from a
+   * previously logged-in account on the same device/browser. */
+  profileOwnerUid: string | null;
+  setProfileOwnerUid: (uid: string | null) => void;
   hasOnboarded: boolean;
   completeOnboarding: () => void;
   notificationSound: boolean;
@@ -28,15 +47,11 @@ export const useSettingsStore = create<SettingsState>()(
       toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
       colorScheme: 'blue',
       setColorScheme: (scheme) => set({ colorScheme: scheme }),
-      profile: {
-        name: '',
-        registerNumber: '',
-        department: '',
-        year: '',
-        semester: '',
-        avatar: '',
-      },
+      profile: defaultProfile,
       updateProfile: (p) => set((s) => ({ profile: { ...s.profile, ...p } })),
+      resetProfile: () => set({ profile: defaultProfile }),
+      profileOwnerUid: null,
+      setProfileOwnerUid: (uid) => set({ profileOwnerUid: uid }),
       hasOnboarded: false,
       completeOnboarding: () => set({ hasOnboarded: true }),
       notificationSound: true,

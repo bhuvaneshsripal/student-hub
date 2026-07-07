@@ -18,6 +18,9 @@ export function CloudSync() {
   const { user } = useAuthUser();
   const profile = useSettingsStore((s) => s.profile);
   const updateProfile = useSettingsStore((s) => s.updateProfile);
+  const resetProfile = useSettingsStore((s) => s.resetProfile);
+  const profileOwnerUid = useSettingsStore((s) => s.profileOwnerUid);
+  const setProfileOwnerUid = useSettingsStore((s) => s.setProfileOwnerUid);
 
   const readyToSync = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -27,6 +30,16 @@ export function CloudSync() {
     readyToSync.current = false;
     if (!user) return;
 
+    // The profile cached in localStorage belongs to whichever account was
+    // last logged in on this device/browser. If that isn't *this* account,
+    // it's leftover data from someone else's session — wipe it immediately,
+    // before we ever read or write the cloud, so it's never shown under the
+    // new account and never gets uploaded as if it were the new account's
+    // own data.
+    if (profileOwnerUid !== user.uid) {
+      resetProfile();
+    }
+
     let cancelled = false;
     (async () => {
       const cloudProfile = await fetchProfileFromCloud(user.uid);
@@ -34,11 +47,12 @@ export function CloudSync() {
 
       if (cloudProfile) {
         updateProfile(cloudProfile);
-      } else {
-        // Nothing in the cloud yet for this account — seed it with
-        // whatever is currently sitting in local storage.
-        await saveProfileToCloud(user.uid, profile);
       }
+      // If there's no cloud profile yet, we simply leave the (now blank,
+      // or already-correct) local profile as-is. It gets saved to the
+      // cloud once the user actually fills in their own details, via
+      // Step B below — we never push stale/foreign local data up.
+      setProfileOwnerUid(user.uid);
       readyToSync.current = true;
     })();
 

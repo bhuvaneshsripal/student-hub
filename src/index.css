@@ -254,11 +254,16 @@ body, main, .overflow-y-auto {
     background-attachment: scroll;
   }
 
-  /* Backdrop blur is expensive per-frame on mobile GPUs; a lighter blur
-     keeps the glass look while scrolling stays smooth. */
-  .glass {
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+  /* Backdrop-filter forces Safari to recompute a blur on every element
+     that has it, on every scroll frame — with 8+ .glass cards on screen
+     (Dashboard, lists, etc.) that's the main cause of laggy scrolling on
+     iPhone. The --glass background color is already ~65-68% opaque, so
+     dropping the blur entirely on mobile keeps the look almost identical
+     while removing the per-frame GPU cost. */
+  .glass,
+  .nav-panel {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 

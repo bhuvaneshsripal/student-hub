@@ -8,7 +8,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardHeader } from '../components/ui/Card';
 import { ProgressBar } from '../components/ui/ProgressBar';
 import { ProgressRing } from '../components/ui/ProgressRing';
-import { CardSkeleton } from '../components/ui/Skeleton';
 import { useSettingsStore } from '../store/settingsStore';
 import { useTimetableStore } from '../store/timetableStore';
 import { useCgpaStore, overallCGPA } from '../store/cgpaStore';
@@ -28,7 +27,6 @@ function greeting() {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
   const profile = useSettingsStore((s) => s.profile);
   const updateProfile = useSettingsStore((s) => s.updateProfile);
@@ -71,14 +69,11 @@ export default function Dashboard() {
     syncPomodoro();
     syncCalendar();
 
-    const t = setTimeout(() => setLoading(false), 500);
-
     const clock = setInterval(() => {
       setNow(new Date());
     }, 30000);
 
     return () => {
-      clearTimeout(t);
       clearInterval(clock);
     };
   }, []);
@@ -91,14 +86,6 @@ export default function Dashboard() {
     : 0;
   const pendingTasks = tasks.filter((t) => !t.done);
   const upcomingExams = events.filter((e) => e.type === 'exam').slice(0, 2);
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

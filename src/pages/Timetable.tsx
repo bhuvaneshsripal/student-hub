@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Plus, Printer, FileDown, Pencil, Trash2, AlertTriangle, ClipboardPaste, Check } from 'lucide-react';
+import { Plus, Printer, FileDown, Pencil, Trash2, AlertTriangle, ClipboardPaste, Check, Clock } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { SearchBox } from '../components/ui/SearchBox';
@@ -10,27 +10,53 @@ import { useConfirm } from '../hooks/useConfirm';
 import { DAYS, type ClassBlock, type Day } from '../types';
 import { exportTimetablePdf } from '../utils/pdf';
 import { parseMyCamuTimetable } from '../utils/mycamuParser';
+import { colorForSubjectName } from '../utils/subjectColor';
 
-const COLORS = ['#3B5BFF', '#8B3AFF', '#06B6D4', '#EC4899', '#10B981', '#FF9F1C', '#F04438'];
+// Manual "Add Class" entries default to an 8–9 AM slot. Color is no longer
+// picked manually — it's always derived from the subject name (see
+// colorForSubjectName) so the same subject is always the same color
+// everywhere in the app.
+const emptyForm = { day: 'Monday' as Day, subject: '', faculty: '', room: '', start: '08:00', end: '09:00' };
 
-// Manual "Add Class" entries default to an 8–9 AM slot.
-const emptyForm = { day: 'Monday' as Day, subject: '', faculty: '', room: '', start: '08:00', end: '09:00', color: COLORS[0] };
+/** Represents one card in the day column. In 1h view this is always exactly
+ * one underlying class. In 2h view, consecutive classes on the same day with
+ * the same subject/faculty/room whose times butt up against each other
+ * (previous end === next start) are combined into a single wider block. */
+interface DisplayBlock {
+  ids: string[];
+  classes: ClassBlock[];
+  subject: string;
+  faculty: string;
+  room: string;
+  color: string;
+  start: string;
+  end: string;
+}
 
-/** Deterministically map a subject name to one of the palette colors, so the
- * same subject always gets the same color whether it's pasted from MyCamu
- * multiple times or already exists elsewhere in the timetable. */
-function colorForSubjectName(subject: string): string {
-  const key = subject.trim().toLowerCase();
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) {
-    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+function buildDisplayBlocks(dayClasses: ClassBlock[], merge: boolean): DisplayBlock[] {
+  const sorted = [...dayClasses].sort((a, b) => a.start.localeCompare(b.start));
+  if (!merge) {
+    return sorted.map((c) => ({ ids: [c.id], classes: [c], subject: c.subject, faculty: c.faculty, room: c.room, color: colorForSubjectName(c.subject), start: c.start, end: c.end }));
   }
-  return COLORS[hash % COLORS.length];
+  const blocks: DisplayBlock[] = [];
+  for (const c of sorted) {
+    const last = blocks[blocks.length - 1];
+    if (last && last.end === c.start && last.subject === c.subject && last.faculty === c.faculty && last.room === c.room) {
+      last.end = c.end;
+      last.ids.push(c.id);
+      last.classes.push(c);
+    } else {
+      blocks.push({ ids: [c.id], classes: [c], subject: c.subject, faculty: c.faculty, room: c.room, color: colorForSubjectName(c.subject), start: c.start, end: c.end });
+    }
+  }
+  return blocks;
 }
 
 export default function Timetable() {
   const { classes, addClass, updateClass, removeClass, restoreClass, hasConflict } = useTimetableStore();
   const colorScheme = useSettingsStore((s) => s.colorScheme);
+  const slotView = useSettingsStore((s) => s.timetableSlotView);
+  const setSlotView = useSettingsStore((s) => s.setTimetableSlotView);
   const push = useToastStore((s) => s.push);
   const { confirm, dialog } = useConfirm();
 
@@ -62,20 +88,21 @@ export default function Timetable() {
 
   function openEdit(c: ClassBlock) {
     setEditing(c);
-    setForm({ day: c.day, subject: c.subject, faculty: c.faculty, room: c.room, start: c.start, end: c.end, color: c.color });
+    setForm({ day: c.day, subject: c.subject, faculty: c.faculty, room: c.room, start: c.start, end: c.end });
     setModalOpen(true);
   }
 
   function submit() {
     if (!form.subject.trim()) { push('Subject name is required', 'error'); return; }
     if (form.start >= form.end) { push('End time must be after start time', 'error'); return; }
-    const conflict = hasConflict({ ...form, id: editing?.id });
+    const candidate = { ...form, color: colorForSubjectName(form.subject) };
+    const conflict = hasConflict({ ...candidate, id: editing?.id });
     if (conflict) { push('This clashes with another class on the same day', 'error'); return; }
     if (editing) {
-      updateClass(editing.id, form);
+      updateClass(editing.id, candidate);
       push('Class updated', 'success');
     } else {
-      addClass(form);
+      addClass(candidate);
       push('Class added to timetable', 'success');
     }
     setModalOpen(false);
@@ -141,6 +168,22 @@ export default function Timetable() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 no-print">
+        <div className="flex gap-1 p-1 rounded-lg shrink-0" style={{ background: 'var(--line)' }} role="group" aria-label="Timetable slot view">
+          {(['1h', '2h'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setSlotView(v)}
+              title={v === '2h' ? 'Merge back-to-back classes of the same subject into one 2-hour block' : 'Show each class slot separately'}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors"
+              style={{
+                background: slotView === v ? 'linear-gradient(90deg, var(--blue), var(--purple))' : 'transparent',
+                color: slotView === v ? '#fff' : 'var(--ink)',
+              }}
+            >
+              <Clock size={12} /> {v === '1h' ? '1h period' : '2h period'}
+            </button>
+          ))}
+        </div>
         <SearchBox value={query} onChange={setQuery} placeholder="Search subject or faculty..." />
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {(['All', ...DAYS] as const).map((d) => (
@@ -162,6 +205,7 @@ export default function Timetable() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         {DAYS.filter((d) => dayFilter === 'All' || dayFilter === d).map((day) => {
           const dayClasses = filtered.filter((c) => c.day === day).sort((a, b) => a.start.localeCompare(b.start));
+          const blocks = buildDisplayBlocks(dayClasses, slotView === '2h');
           return (
             <div
               key={day}
@@ -176,46 +220,54 @@ export default function Timetable() {
                 </button>
               </div>
               <div className="space-y-2">
-                {dayClasses.map((c) => (
-                  <div
-                    key={c.id}
-                    draggable
-                    onDragStart={() => setDragId(c.id)}
-                    className="rounded-xl p-2.5 cursor-grab active:cursor-grabbing group"
-                    style={{ background: 'var(--bg)', borderLeft: `3px solid ${c.color}` }}
-                  >
-                    <div className="flex items-start justify-between gap-1">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate" style={{ color: 'var(--ink)' }}>{c.subject}</p>
-                        <p className="text-xs truncate" style={{ color: 'var(--ink-soft)' }}>{c.faculty}</p>
-                        <p className="text-xs font-mono" style={{ color: 'var(--ink-soft)' }}>{c.start}–{c.end} • {c.room}</p>
-                      </div>
-                      <div className="flex flex-col gap-1 shrink-0 no-print">
-                        <button
-                          onClick={() => openEdit(c)}
-                          aria-label="Edit class"
-                          className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.1]"
-                        >
-                          <Pencil size={12} style={{ color: 'var(--ink-soft)' }} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            confirm({ title: 'Delete class?', message: `"${c.subject}" on ${c.day} will be permanently removed.` }, () => {
-                              const deleted = c;
-                              removeClass(c.id);
-                              push('Class removed', 'info', { onUndo: () => restoreClass(deleted) });
-                            });
-                          }}
-                          aria-label="Remove class"
-                          className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.1]"
-                        >
-                          <Trash2 size={12} style={{ color: 'var(--danger)' }} />
-                        </button>
+                {blocks.map((b) => {
+                  const isMerged = b.classes.length > 1;
+                  return (
+                    <div
+                      key={b.ids.join('-')}
+                      draggable={!isMerged}
+                      onDragStart={() => !isMerged && setDragId(b.ids[0])}
+                      className={`rounded-xl p-2.5 group ${isMerged ? '' : 'cursor-grab active:cursor-grabbing'}`}
+                      style={{ background: 'var(--bg)', borderLeft: `3px solid ${b.color}` }}
+                    >
+                      <div className="flex items-start justify-between gap-1">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate" style={{ color: 'var(--ink)' }}>{b.subject}</p>
+                          <p className="text-xs truncate" style={{ color: 'var(--ink-soft)' }}>{b.faculty}</p>
+                          <p className="text-xs font-mono" style={{ color: 'var(--ink-soft)' }}>{b.start}–{b.end} • {b.room}</p>
+                        </div>
+                        <div className="flex flex-col gap-1 shrink-0 no-print">
+                          {!isMerged && (
+                            <button
+                              onClick={() => openEdit(b.classes[0])}
+                              aria-label="Edit class"
+                              className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.1]"
+                            >
+                              <Pencil size={12} style={{ color: 'var(--ink-soft)' }} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              const label = isMerged ? `${b.classes.length} merged classes for "${b.subject}"` : `"${b.subject}"`;
+                              confirm({ title: 'Delete class?', message: `${label} on ${day} will be permanently removed.` }, () => {
+                                const deletedClasses = b.classes;
+                                deletedClasses.forEach((dc) => removeClass(dc.id));
+                                push(isMerged ? 'Classes removed' : 'Class removed', 'info', {
+                                  onUndo: () => deletedClasses.forEach((dc) => restoreClass(dc)),
+                                });
+                              });
+                            }}
+                            aria-label="Remove class"
+                            className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-black/[0.06] dark:hover:bg-white/[0.1]"
+                          >
+                            <Trash2 size={12} style={{ color: 'var(--danger)' }} />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-                {dayClasses.length === 0 && (
+                  );
+                })}
+                {blocks.length === 0 && (
                   <p className="text-xs text-center py-4" style={{ color: 'var(--ink-soft)' }}>No classes</p>
                 )}
               </div>
@@ -252,18 +304,13 @@ export default function Timetable() {
               <input type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} className="input" />
             </Field>
           </div>
-          <Field label="Color">
-            <div className="flex gap-2 flex-wrap">
-              {COLORS.map((c) => (
-                <button
-                  key={c} onClick={() => setForm({ ...form, color: c })}
-                  className="w-7 h-7 rounded-full border-2"
-                  style={{ background: c, borderColor: form.color === c ? 'var(--ink)' : 'transparent' }}
-                />
-              ))}
+          {form.subject.trim() && (
+            <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--ink-soft)' }}>
+              <span className="w-4 h-4 rounded-full shrink-0" style={{ background: colorForSubjectName(form.subject) }} />
+              Color is matched automatically to "{form.subject.trim()}" — every slot of this subject shares this color.
             </div>
-          </Field>
-          {hasConflict({ ...form, id: editing?.id }) && (
+          )}
+          {hasConflict({ ...form, color: colorForSubjectName(form.subject), id: editing?.id }) && (
             <div className="flex items-center gap-2 text-xs p-2 rounded-lg" style={{ background: 'rgba(240,68,56,0.1)', color: 'var(--danger)' }}>
               <AlertTriangle size={13} /> This timing clashes with another class on {form.day}.
             </div>

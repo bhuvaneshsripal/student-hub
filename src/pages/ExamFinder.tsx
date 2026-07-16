@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Search, CalendarClock, AlertTriangle } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { LinkedinIcon, DEVELOPER_LINKEDIN_URL } from '../components/ui/LinkedinIcon';
 import { useSettingsStore } from '../store/settingsStore';
 import { fetchExamSheet, examsForRegisterNumber, type ExamWithGap } from '../services/examService';
 import { EXAM_SHEET_CSV_URL } from '../config/examSheet';
@@ -12,11 +13,13 @@ export default function ExamFinder() {
   const [regNo, setRegNo] = useState(profileRegNo || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notConfigured, setNotConfigured] = useState(false);
   const [results, setResults] = useState<ExamWithGap[] | null>(null);
 
   async function search() {
+    setNotConfigured(false);
     if (!regNo.trim()) { setError('Enter your register number first.'); return; }
-    if (!EXAM_SHEET_CSV_URL) { setError('Exam sheet isn\'t set up yet. Ask the developer to add the link in src/config/examSheet.ts.'); return; }
+    if (!EXAM_SHEET_CSV_URL) { setError("Exam sheet isn't set up yet."); setNotConfigured(true); return; }
 
     setLoading(true);
     setError(null);
@@ -61,7 +64,21 @@ export default function ExamFinder() {
       {error && (
         <Card className="max-w-lg flex items-start gap-2.5">
           <AlertTriangle size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--warning)' }} />
-          <p className="text-sm" style={{ color: 'var(--ink)' }}>{error}</p>
+          <div>
+            <p className="text-sm" style={{ color: 'var(--ink)' }}>{error}</p>
+            {notConfigured && (
+              <a
+                href={DEVELOPER_LINKEDIN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs mt-1.5 hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--blue)' }}
+              >
+                <LinkedinIcon size={13} color="#0A66C2" />
+                Ask the developer to update this via LinkedIn
+              </a>
+            )}
+          </div>
         </Card>
       )}
 

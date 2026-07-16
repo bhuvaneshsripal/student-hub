@@ -4,7 +4,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { CloudSync } from './components/CloudSync';
 import { useAuthUser } from './hooks/useAuthUser';
 import Login from './pages/Login';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTimetableStore } from "./store/timetableStore";
 import { useCgpaStore } from "./store/cgpaStore";
 import { useProductivityStore } from "./store/productivityStore";
@@ -39,21 +39,46 @@ function PageFallback() {
   );
 }
 
-function FullScreenLoader() {
+function FullScreenLoader({ slow }: { slow: boolean }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-white">
+      <img src="/studo-logo.png" alt="Studo" className="w-12 h-12 rounded-2xl" />
       <div
         className="w-8 h-8 rounded-full border-2 border-transparent animate-spin"
         style={{ borderTopColor: 'var(--blue)', borderRightColor: 'var(--purple)' }}
       />
+      {slow && (
+        <div className="flex flex-col items-center gap-2 mt-2 text-center px-6">
+          <p className="text-sm text-gray-500">This is taking longer than usual — your connection may be slow.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-sm font-medium px-3 py-1.5 rounded-lg"
+            style={{ background: 'var(--blue)', color: '#fff' }}
+          >
+            Reload
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-/** Blocks access to everything except /login until Firebase confirms a user. */
+/** Blocks access to everything except /login until Firebase confirms a user.
+ * On a cold load (or after the app has been closed for a while), Firebase
+ * needs a round trip to verify the session before it knows whether you're
+ * logged in — this shows a branded loader for that gap instead of a blank
+ * white page, and surfaces a reload option if it ever takes unusually long. */
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthUser();
-  if (loading) return <FullScreenLoader />;
+  const [slow, setSlow] = useState(false);
+
+  useEffect(() => {
+    if (!loading) { setSlow(false); return; }
+    const t = setTimeout(() => setSlow(true), 7000);
+    return () => clearTimeout(t);
+  }, [loading]);
+
+  if (loading) return <FullScreenLoader slow={slow} />;
   if (!user) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }

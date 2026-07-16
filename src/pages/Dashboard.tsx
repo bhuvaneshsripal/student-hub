@@ -17,6 +17,7 @@ import { useProductivityStore } from '../store/productivityStore';
 import { usePlacementStore } from '../store/placementStore';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import { DAYS, type ClassBlock } from '../types';
+import { colorForSubjectName } from '../utils/subjectColor';
 
 function greeting() {
   const h = new Date().getHours();
@@ -198,7 +199,7 @@ export default function Dashboard() {
             <div className="space-y-2">
               {todayClasses.map((c) => (
                 <div key={c.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--bg)' }}>
-                  <div className="w-1.5 h-10 rounded-full shrink-0" style={{ background: c.color }} />
+                  <div className="w-1.5 h-10 rounded-full shrink-0" style={{ background: colorForSubjectName(c.subject) }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{c.subject}</p>
                     <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>{c.faculty} • {c.room}</p>

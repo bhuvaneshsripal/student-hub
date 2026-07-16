@@ -141,41 +141,51 @@ export default function CGPA() {
       <div className="space-y-4">
         {semesters.map((sem) => (
           <Card key={sem.id}>
-            <CardHeader
-              title={sem.name}
-              subtitle={expanded[sem.id] ? `GPA: ${semesterGPA(sem.subjects).toFixed(2)} • ${sem.subjects.length} subjects` : undefined}
-              icon={<GraduationCap size={16} />}
-              color="green"
-              action={
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => toggleExpand(sem.id)}
-                    aria-label={expanded[sem.id] ? 'Collapse semester' : 'Expand semester'}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.08]"
-                  >
-                    <ChevronDown
-                      size={16}
-                      style={{
-                        color: 'var(--ink-soft)',
-                        transform: expanded[sem.id] ? 'none' : 'rotate(-90deg)',
-                        transition: 'transform 0.2s ease',
+            <div
+              onClick={() => toggleExpand(sem.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(sem.id); } }}
+              role="button"
+              tabIndex={0}
+              aria-expanded={!!expanded[sem.id]}
+              aria-label={expanded[sem.id] ? `Collapse ${sem.name}` : `Expand ${sem.name}`}
+              className="cursor-pointer rounded-xl -m-1 p-1"
+            >
+              <CardHeader
+                title={sem.name}
+                subtitle={expanded[sem.id] ? `GPA: ${semesterGPA(sem.subjects).toFixed(2)} • ${sem.subjects.length} subjects` : undefined}
+                icon={<GraduationCap size={16} />}
+                color="green"
+                action={
+                  <div className="flex items-center gap-1">
+                    <div
+                      aria-hidden="true"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    >
+                      <ChevronDown
+                        size={16}
+                        style={{
+                          color: 'var(--ink-soft)',
+                          transform: expanded[sem.id] ? 'none' : 'rotate(-90deg)',
+                          transition: 'transform 0.2s ease',
+                        }}
+                      />
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        confirm({ title: 'Delete semester?', message: `"${sem.name}" and all its subjects will be permanently deleted.` }, () => {
+                          const deleted = sem;
+                          removeSemester(sem.id);
+                          push('Semester removed', 'info', { onUndo: () => restoreSemester(deleted) });
+                        });
                       }}
-                    />
-                  </button>
-                  <button
-                    onClick={() => {
-                      confirm({ title: 'Delete semester?', message: `"${sem.name}" and all its subjects will be permanently deleted.` }, () => {
-                        const deleted = sem;
-                        removeSemester(sem.id);
-                        push('Semester removed', 'info', { onUndo: () => restoreSemester(deleted) });
-                      });
-                    }}
-                  >
-                    <Trash2 size={16} style={{ color: 'var(--danger)' }} />
-                  </button>
-                </div>
-              }
-            />
+                    >
+                      <Trash2 size={16} style={{ color: 'var(--danger)' }} />
+                    </button>
+                  </div>
+                }
+              />
+            </div>
             {expanded[sem.id] && (
               <>
                 <div className="overflow-x-auto">

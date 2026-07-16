@@ -35,6 +35,8 @@ export default function Settings() {
 
   const classReminders = useSettingsStore((s) => s.classReminders);
   const toggleClassReminders = useSettingsStore((s) => s.toggleClassReminders);
+  const systemNotifications = useSettingsStore((s) => s.systemNotifications);
+  const toggleSystemNotifications = useSettingsStore((s) => s.toggleSystemNotifications);
 
   function openExportPreview() {
     setPreviewMode('export');
@@ -122,7 +124,7 @@ export default function Settings() {
       </Card>
 
       <Card>
-        <CardHeader title="Class Reminders" icon={<BellRing size={16} />} color="blue" />
+        <CardHeader title="Notifications" icon={<BellRing size={16} />} color="blue" />
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Notify before class</p>
@@ -141,9 +143,28 @@ export default function Settings() {
             }}
           />
         </div>
-        {classReminders && 'Notification' in window && Notification.permission === 'denied' && (
+        <div className="h-px my-4" style={{ background: 'var(--line)' }} />
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>System notifications</p>
+            <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Show every in-app notification as a normal device notification, just like your other apps.</p>
+          </div>
+          <Switch
+            checked={systemNotifications}
+            label="Toggle system notifications"
+            onIcon={<BellRing size={13} className="text-[var(--blue)]" />}
+            offIcon={<BellOff size={13} className="text-[var(--ink-soft)]" />}
+            onChange={async () => {
+              if (!systemNotifications && 'Notification' in window && Notification.permission === 'default') {
+                await Notification.requestPermission();
+              }
+              toggleSystemNotifications();
+            }}
+          />
+        </div>
+        {(classReminders || systemNotifications) && 'Notification' in window && Notification.permission === 'denied' && (
           <p className="text-xs mt-3" style={{ color: 'var(--danger)' }}>
-            Notifications are blocked for this site in your browser settings, so reminders won't show up until you allow them.
+            Notifications are blocked for this site in your browser settings, so they won't show up until you allow them.
           </p>
         )}
       </Card>

@@ -152,12 +152,6 @@ export default function Notes() {
             onKeyDown={handleContentKeyDown}
             placeholder="Write your note... (try &quot;1. &quot; for an auto-numbered list)" rows={8} className="input resize-none"
           />
-          {form.content.trim() && (
-            <div className="rounded-xl px-3 py-2 border" style={{ borderColor: 'var(--line)', background: 'var(--bg)' }}>
-              <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--ink-soft)' }}>Preview</p>
-              <p className="text-xs whitespace-pre-wrap" style={{ color: 'var(--ink)' }}>{form.content}</p>
-            </div>
-          )}
           <input
             value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })}
             placeholder="Tags (comma separated)" className="input"

@@ -38,6 +38,15 @@ interface SettingsState {
   classReminderMinutes: number;
   classReminders: boolean;
   toggleClassReminders: () => void;
+  /** When on, every in-app notification (toast) also fires as a native
+   * OS/browser notification — same as any other app on the device. */
+  systemNotifications: boolean;
+  toggleSystemNotifications: () => void;
+  /** Timetable display granularity: '1h' shows each class slot exactly as
+   * entered; '2h' merges consecutive same-subject/faculty/room slots into a
+   * single combined block (e.g. 8–9 and 9–10 of the same class become 8–10). */
+  timetableSlotView: '1h' | '2h';
+  setTimetableSlotView: (v: '1h' | '2h') => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -59,6 +68,10 @@ export const useSettingsStore = create<SettingsState>()(
       classReminderMinutes: 15,
       classReminders: true,
       toggleClassReminders: () => set((s) => ({ classReminders: !s.classReminders })),
+      systemNotifications: false,
+      toggleSystemNotifications: () => set((s) => ({ systemNotifications: !s.systemNotifications })),
+      timetableSlotView: '1h',
+      setTimetableSlotView: (v) => set({ timetableSlotView: v }),
     }),
     { name: 'studenthub-settings' }
   )

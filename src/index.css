@@ -195,18 +195,27 @@ body {
 }
 
 .search-bar {
+  position: relative;
   background: var(--search-bg);
-  border: 1px solid var(--search-border);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  border: 1.5px solid transparent;
+  background-image: linear-gradient(var(--search-bg), var(--search-bg)), linear-gradient(90deg, var(--blue), var(--purple));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0 4px 16px -8px var(--accent-solid-border);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
 }
 
 .search-bar:focus-within {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: var(--accent-solid-border);
+  background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), linear-gradient(90deg, var(--blue), var(--purple));
+  box-shadow: 0 6px 22px -6px var(--accent-solid-border);
 }
 
 .dark .search-bar:focus-within {
-  background: rgba(255, 255, 255, 0.14);
+  background-image: linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.12)), linear-gradient(90deg, var(--blue), var(--purple));
+}
+
+.search-bar svg {
+  color: var(--blue) !important;
 }
 
 .grad-text {

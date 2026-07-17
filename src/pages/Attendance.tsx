@@ -1,25 +1,24 @@
 import { useMemo, useState } from 'react';
-import { Plus, Trash2, Check, X as XIcon, FileDown, Calculator } from 'lucide-react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { Plus, FileDown, Calculator, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { ProgressBar } from '../components/ui/ProgressBar';
 import {
-  useAttendanceStore, attendancePercent, classesNeededForSafe, classesCanMissSafe, attendanceStatus,
+  useAttendanceStore, attendancePercent, attendanceStatus,
   classesNeededForThreshold, classesCanMissForThreshold, SAFE_THRESHOLD, semesterDayCounts,
 } from '../store/attendanceStore';
+import { useTimetableStore } from '../store/timetableStore';
 import { CalendarRange } from 'lucide-react';
 import { useToastStore } from '../store/toastStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useConfirm } from '../hooks/useConfirm';
 import { exportAttendancePdf } from '../utils/pdf';
 
-const STATUS_COLOR = { safe: 'var(--success)', warning: 'var(--warning)', danger: 'var(--danger)' };
-const STATUS_LABEL = { safe: 'Safe', warning: 'Warning', danger: 'Danger' };
-
 export default function Attendance() {
-  const { subjects, addSubject, removeSubject, restoreSubject, markToday, semesterStart, semesterEnd, setSemesterDates } = useAttendanceStore();
+  const { subjects, addSubject, semesterStart, semesterEnd, setSemesterDates, resetAll } = useAttendanceStore();
+  const clearAttendanceLogs = useTimetableStore((s) => s.clearAttendanceLogs);
   const colorScheme = useSettingsStore((s) => s.colorScheme);
   const push = useToastStore((s) => s.push);
   const { confirm, dialog } = useConfirm();
@@ -46,7 +45,17 @@ export default function Attendance() {
     ].filter((d) => d.value > 0);
   }, [subjects]);
 
-  const barData = subjects.map((s) => ({ name: s.name.length > 10 ? s.name.slice(0, 10) + '…' : s.name, pct: Number(attendancePercent(s).toFixed(1)) }));
+  /** Shifts the semester start/end date by `deltaDays` — the previous/next
+   * arrows next to each date field. */
+  function shiftDate(which: 'start' | 'end', deltaDays: number) {
+    const base = which === 'start' ? semesterStart : semesterEnd;
+    if (!base) return;
+    const d = new Date(base + 'T00:00:00');
+    d.setDate(d.getDate() + deltaDays);
+    const next = d.toISOString().slice(0, 10);
+    if (which === 'start') setSemesterDates(next, semesterEnd);
+    else setSemesterDates(semesterStart, next);
+  }
 
   function submit() {
     if (!form.name.trim()) { push('Subject name is required', 'error'); return; }
@@ -63,6 +72,20 @@ export default function Attendance() {
     push('Attendance PDF downloaded', 'success');
   }
 
+  function handleResetAll() {
+    confirm(
+      {
+        title: 'Reset all attendance data?',
+        message: 'This clears every subject\'s present/attended counts and removes today\'s marks from the Dashboard and Timetable. This cannot be undone.',
+      },
+      async () => {
+        await resetAll();
+        await clearAttendanceLogs();
+        push('Attendance reset to 0%', 'success');
+      }
+    );
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -71,6 +94,7 @@ export default function Attendance() {
           <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>Stay above {SAFE_THRESHOLD}% and know exactly where you stand.</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" icon={<RotateCcw size={14} />} onClick={handleResetAll}>Reset</Button>
           <Button variant="outline" size="sm" icon={<FileDown size={14} />} onClick={handleExportPdf}>Export PDF</Button>
           <Button size="sm" icon={<Plus size={14} />} onClick={() => setModalOpen(true)}>Add Subject</Button>
         </div>
@@ -84,19 +108,59 @@ export default function Attendance() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <label className="block">
             <span className="text-xs font-medium block mb-1" style={{ color: 'var(--ink-soft)' }}>Semester start date</span>
-            <input
-              type="date" value={semesterStart}
-              onChange={(e) => setSemesterDates(e.target.value, semesterEnd)}
-              className="calc-input"
-            />
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => shiftDate('start', -1)}
+                aria-label="Previous day"
+                title="Previous day"
+                className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                style={{ border: '1px solid var(--line)' }}
+              >
+                <ChevronLeft size={14} style={{ color: 'var(--ink-soft)' }} />
+              </button>
+              <input
+                type="date" value={semesterStart}
+                onChange={(e) => setSemesterDates(e.target.value, semesterEnd)}
+                className="calc-input"
+              />
+              <button
+                onClick={() => shiftDate('start', 1)}
+                aria-label="Next day"
+                title="Next day"
+                className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                style={{ border: '1px solid var(--line)' }}
+              >
+                <ChevronRight size={14} style={{ color: 'var(--ink-soft)' }} />
+              </button>
+            </div>
           </label>
           <label className="block">
             <span className="text-xs font-medium block mb-1" style={{ color: 'var(--ink-soft)' }}>Semester end date</span>
-            <input
-              type="date" value={semesterEnd}
-              onChange={(e) => setSemesterDates(semesterStart, e.target.value)}
-              className="calc-input"
-            />
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => shiftDate('end', -1)}
+                aria-label="Previous day"
+                title="Previous day"
+                className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                style={{ border: '1px solid var(--line)' }}
+              >
+                <ChevronLeft size={14} style={{ color: 'var(--ink-soft)' }} />
+              </button>
+              <input
+                type="date" value={semesterEnd}
+                onChange={(e) => setSemesterDates(semesterStart, e.target.value)}
+                className="calc-input"
+              />
+              <button
+                onClick={() => shiftDate('end', 1)}
+                aria-label="Next day"
+                title="Next day"
+                className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                style={{ border: '1px solid var(--line)' }}
+              >
+                <ChevronRight size={14} style={{ color: 'var(--ink-soft)' }} />
+              </button>
+            </div>
           </label>
         </div>
         {semDays && (
@@ -158,93 +222,32 @@ export default function Attendance() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-1">
-          <CardHeader title="Overall Attendance" />
-          <p className="font-display text-4xl font-bold mb-2" style={{ color: overall >= SAFE_THRESHOLD ? 'var(--success)' : 'var(--danger)' }}>
-            {overall.toFixed(1)}%
-          </p>
-          <ProgressBar value={overall} />
-          {pieData.length > 0 && (
-            <div className="mt-4">
-              <ResponsiveContainer width="100%" height={160}>
-                <PieChart>
-                  <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={40} outerRadius={65} paddingAngle={3}>
-                    {pieData.map((d, i) => <Cell key={i} fill={d.color} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 12, fontSize: 12 }} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex justify-center gap-3 mt-1 text-xs">
-                {pieData.map((d) => (
-                  <span key={d.name} className="flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
-                    <span className="w-2 h-2 rounded-full" style={{ background: d.color }} /> {d.name} ({d.value})
-                  </span>
-                ))}
-              </div>
+      <Card>
+        <CardHeader title="Overall Attendance" />
+        <p className="font-display text-4xl font-bold mb-2" style={{ color: overall >= SAFE_THRESHOLD ? 'var(--success)' : 'var(--danger)' }}>
+          {overall.toFixed(1)}%
+        </p>
+        <ProgressBar value={overall} />
+        {pieData.length > 0 && (
+          <div className="mt-4 max-w-xs">
+            <ResponsiveContainer width="100%" height={160}>
+              <PieChart>
+                <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={40} outerRadius={65} paddingAngle={3}>
+                  {pieData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                </Pie>
+                <Tooltip contentStyle={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 12, fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="flex justify-center gap-3 mt-1 text-xs">
+              {pieData.map((d) => (
+                <span key={d.name} className="flex items-center gap-1" style={{ color: 'var(--ink-soft)' }}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: d.color }} /> {d.name} ({d.value})
+                </span>
+              ))}
             </div>
-          )}
-        </Card>
-
-        <Card className="lg:col-span-2">
-          <CardHeader title="Subject-wise Attendance" />
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={barData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--ink-soft)' }} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--ink-soft)' }} />
-              <Tooltip contentStyle={{ background: 'var(--bg-elev)', border: '1px solid var(--line)', borderRadius: 12, fontSize: 12 }} />
-              <Bar dataKey="pct" radius={[8, 8, 0, 0]} fill="var(--blue)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {subjects.map((s) => {
-          const pct = attendancePercent(s);
-          const status = attendanceStatus(pct);
-          return (
-            <Card key={s.id}>
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="font-display font-semibold text-sm" style={{ color: 'var(--ink)' }}>{s.name}</h3>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--ink-soft)' }}>{s.attended} / {s.total} classes attended</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{ background: `${STATUS_COLOR[status]}1A`, color: STATUS_COLOR[status] }}>
-                    {STATUS_LABEL[status]}
-                  </span>
-                  <button
-                    onClick={() => {
-                      confirm({ title: 'Delete subject?', message: `"${s.name}" and its attendance record will be permanently deleted.` }, () => {
-                        const deleted = s;
-                        removeSubject(s.id);
-                        push('Subject removed', 'info', { onUndo: () => restoreSubject(deleted) });
-                      });
-                    }}
-                  >
-                    <Trash2 size={14} style={{ color: 'var(--ink-soft)' }} />
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 mb-3">
-                <span className="font-display text-2xl font-bold" style={{ color: STATUS_COLOR[status] }}>{pct.toFixed(1)}%</span>
-                <div className="flex-1"><ProgressBar value={pct} color={STATUS_COLOR[status]} /></div>
-              </div>
-              <p className="text-xs mb-3" style={{ color: 'var(--ink-soft)' }}>
-                {pct >= SAFE_THRESHOLD
-                  ? `You can bunk ${classesCanMissSafe(s)} more class(es) and stay above ${SAFE_THRESHOLD}%.`
-                  : `Attend ${classesNeededForSafe(s)} more class(es) in a row to reach ${SAFE_THRESHOLD}%.`}
-              </p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" icon={<Check size={13} />} onClick={() => markToday(s.id, true)}>Mark Present</Button>
-                <Button variant="outline" size="sm" icon={<XIcon size={13} />} onClick={() => markToday(s.id, false)}>Mark Absent</Button>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+          </div>
+        )}
+      </Card>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Subject">
         <div className="space-y-3">

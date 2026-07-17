@@ -16,6 +16,8 @@ interface TimetableState {
   restoreClass: (c: ClassBlock) => Promise<void>;
   hasConflict: (c: Omit<ClassBlock, "id"> & { id?: string }) => boolean;
   sync: () => Promise<void>;
+  /** Strips the attendanceLog from every class — used when resetting all attendance data. */
+  clearAttendanceLogs: () => Promise<void>;
 }
 
 export const useTimetableStore = create<TimetableState>((set, get) => ({
@@ -69,5 +71,15 @@ export const useTimetableStore = create<TimetableState>((set, get) => ({
       if (x.day !== c.day) return false;
       return c.start < x.end && x.start < c.end;
     });
+  },
+
+  clearAttendanceLogs: async () => {
+    const classes = get().classes.map((x) => {
+      const { attendanceLog, ...rest } = x;
+      return rest as ClassBlock;
+    });
+
+    set({ classes });
+    await saveTimetable(classes);
   },
 }));

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Plus, Printer, FileDown, Pencil, Trash2, AlertTriangle, ClipboardPaste, Check, Clock } from 'lucide-react';
+import { Plus, Printer, FileDown, Pencil, Trash2, AlertTriangle, ClipboardPaste, Clock, Check } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { SearchBox } from '../components/ui/SearchBox';
@@ -157,7 +157,7 @@ export default function Timetable() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold" style={{ color: 'var(--ink)' }}>Timetable Planner</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>Drag a class card to another day to reschedule it.</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>Drag a class card to another day to reschedule it. Mark today's attendance from the Dashboard.</p>
         </div>
         <div className="flex items-center gap-2 no-print">
           <Button variant="outline" size="sm" icon={<ClipboardPaste size={14} />} onClick={openImport}>Paste from MyCamu</Button>

@@ -59,11 +59,30 @@ function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((cell) => cell.trim() !== ''));
 }
 
+function pad2(n: number) {
+  return String(n).padStart(2, '0');
+}
+
 function toIsoDate(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return trimmed;
   // Already ISO-ish
   if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10);
+
+  // DD.MM.YYYY or DD/MM/YYYY or DD-MM-YYYY — the format Google Sheets/MyCamu
+  // usually exports and which the plain `new Date(...)` constructor below
+  // gets wrong (it either misreads day/month or returns Invalid Date),
+  // which is what was producing "NaN days gap".
+  const dmy = trimmed.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+  if (dmy) {
+    const [, d, m, y] = dmy;
+    const day = Number(d);
+    const month = Number(m);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${y}-${pad2(month)}-${pad2(day)}`;
+    }
+  }
+
   const parsed = new Date(trimmed);
   if (!isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
   return trimmed;
@@ -106,6 +125,7 @@ export function examsForRegisterNumber(all: ExamRecord[], registerNumber: string
     if (i === 0) return { ...exam, leaveDays: null };
     const prev = new Date(mine[i - 1].date);
     const curr = new Date(exam.date);
+    if (isNaN(prev.getTime()) || isNaN(curr.getTime())) return { ...exam, leaveDays: null };
     const diffDays = Math.round((curr.getTime() - prev.getTime()) / 86400000);
     return { ...exam, leaveDays: Math.max(0, diffDays - 1) };
   });

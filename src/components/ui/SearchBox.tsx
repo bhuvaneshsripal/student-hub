@@ -44,7 +44,7 @@ export function SearchBox({ value, onChange, placeholder = 'Search...', classNam
         <button
           onClick={openSearch}
           aria-label="Open search"
-          className={`w-9 h-9 rounded-xl flex items-center justify-center glass ${className}`}
+          className={`w-9 h-9 rounded-xl flex items-center justify-center search-bar ${className}`}
         >
           <Search size={16} style={{ color: 'var(--ink-soft)' }} />
         </button>
@@ -53,7 +53,7 @@ export function SearchBox({ value, onChange, placeholder = 'Search...', classNam
   }
 
   return (
-    <div ref={ref} className={`flex items-center gap-2 rounded-xl px-3 py-2 glass max-w-sm ${className}`}>
+    <div ref={ref} className={`flex items-center gap-2 rounded-xl px-3 py-2 search-bar max-w-sm ${className}`}>
       <Search size={15} style={{ color: 'var(--ink-soft)' }} />
       <input
         ref={inputRef}

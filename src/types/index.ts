@@ -11,6 +11,10 @@ export interface ClassBlock {
   start: string; // "HH:MM"
   end: string; // "HH:MM"
   color: string; // hex
+  /** Per-calendar-date attendance mark for this weekly slot, e.g. { "2026-07-17": "present" }.
+   * Lets the Timetable's Present/Absent buttons know what's already been marked today
+   * (so it doesn't double-count) and lets a mark be corrected/undone. */
+  attendanceLog?: Record<string, 'present' | 'absent'>;
 }
 
 export type Grade = 'S' | 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'U' | 'SA' | 'WC';

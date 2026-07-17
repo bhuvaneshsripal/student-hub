@@ -90,9 +90,22 @@ interface AttendanceState {
     subject: AttendanceSubject
   ) => Promise<void>;
 
+  /** Wipes every subject's present/absent counts back to a clean slate. */
+  resetAll: () => Promise<void>;
+
   markToday: (
     id: string,
     present: boolean
+  ) => Promise<void>;
+
+  /** Used by the Timetable's Present/Absent buttons. Finds the attendance
+   * subject matching `subjectName` (case-insensitive), creating it
+   * automatically if it doesn't exist yet, then applies the given deltas
+   * (clamped so total/attended never go below 0). */
+  markClassOccurrence: (
+    subjectName: string,
+    totalDelta: number,
+    attendedDelta: number
   ) => Promise<void>;
 
   setSemesterDates: (
@@ -107,9 +120,9 @@ export const useAttendanceStore =
       (set, get) => ({
         subjects: seed,
 
-        semesterStart: "",
+        semesterStart: "2026-06-07",
 
-        semesterEnd: "",
+        semesterEnd: "2026-09-19",
 
         setSubjects: (subjects) => {
           set({ subjects });
@@ -187,6 +200,11 @@ export const useAttendanceStore =
           await saveAttendance(subjects);
         },
 
+        resetAll: async () => {
+          set({ subjects: [] });
+          await saveAttendance([]);
+        },
+
         markToday: async (
           id,
           present
@@ -206,6 +224,46 @@ export const useAttendanceStore =
 
           set({ subjects });
 
+          await saveAttendance(subjects);
+        },
+
+        markClassOccurrence: async (
+          subjectName,
+          totalDelta,
+          attendedDelta
+        ) => {
+          const key = subjectName.trim().toLowerCase();
+          if (!key) return;
+
+          const existing = get().subjects.find(
+            (subject) => subject.name.trim().toLowerCase() === key
+          );
+
+          let subjects: AttendanceSubject[];
+
+          if (existing) {
+            subjects = get().subjects.map((subject) =>
+              subject.id === existing.id
+                ? {
+                    ...subject,
+                    total: Math.max(0, subject.total + totalDelta),
+                    attended: Math.max(0, subject.attended + attendedDelta),
+                  }
+                : subject
+            );
+          } else {
+            subjects = [
+              ...get().subjects,
+              {
+                id: crypto.randomUUID(),
+                name: subjectName.trim(),
+                total: Math.max(0, totalDelta),
+                attended: Math.max(0, attendedDelta),
+              },
+            ];
+          }
+
+          set({ subjects });
           await saveAttendance(subjects);
         },
 

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Search, CalendarClock, AlertTriangle } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Search, CalendarClock, AlertTriangle, Sparkles, GraduationCap, PartyPopper } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { LinkedinIcon, DEVELOPER_LINKEDIN_URL } from '../components/ui/LinkedinIcon';
@@ -7,8 +7,27 @@ import { useSettingsStore } from '../store/settingsStore';
 import { fetchExamSheet, examsForRegisterNumber, type ExamWithGap } from '../services/examService';
 import { EXAM_SHEET_CSV_URL } from '../config/examSheet';
 
+/** Human-friendly "days to go" label for an exam date, computed against today
+ * rather than against the previous exam — much more useful at a glance than
+ * a gap-between-exams count, and it can't go NaN even on odd sheet data. */
+function daysToGoLabel(dateIso: string): { label: string; tone: 'past' | 'today' | 'soon' | 'ok' } {
+  const target = new Date(dateIso + 'T00:00:00');
+  if (isNaN(target.getTime())) return { label: '—', tone: 'ok' };
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.round((target.getTime() - today.getTime()) / 86400000);
+  if (diff < 0) return { label: 'Completed', tone: 'past' };
+  if (diff === 0) return { label: 'Today!', tone: 'today' };
+  if (diff === 1) return { label: 'Tomorrow', tone: 'soon' };
+  if (diff <= 3) return { label: `${diff} days left`, tone: 'soon' };
+  return { label: `${diff} days left`, tone: 'ok' };
+}
+
+const TONE_COLOR = { past: 'var(--ink-soft)', today: 'var(--danger)', soon: 'var(--warning)', ok: 'var(--success)' } as const;
+
 export default function ExamFinder() {
   const profileRegNo = useSettingsStore((s) => s.profile.registerNumber);
+  const profileName = useSettingsStore((s) => s.profile.name);
 
   const [regNo, setRegNo] = useState(profileRegNo || '');
   const [loading, setLoading] = useState(false);
@@ -36,12 +55,21 @@ export default function ExamFinder() {
     }
   }
 
+  const nextExam = useMemo(() => {
+    if (!results) return null;
+    return results.find((r) => {
+      const d = new Date(r.date + 'T00:00:00');
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      return !isNaN(d.getTime()) && d.getTime() >= today.getTime();
+    }) || null;
+  }, [results]);
+
   return (
     <div className="space-y-5">
       <div>
         <h1 className="font-display text-2xl font-bold" style={{ color: 'var(--ink)' }}>Exam Finder</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>
-          Enter your register number to see your exam dates and the gap between each exam.
+          Enter your register number to see your exam schedule.
         </p>
       </div>
 
@@ -83,28 +111,63 @@ export default function ExamFinder() {
       )}
 
       {results && results.length > 0 && (
-        <div className="space-y-3 max-w-lg">
-          {results.map((r, i) => (
-            <Card key={i} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <CalendarClock size={18} style={{ color: 'var(--blue)' }} />
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{r.subject || 'Exam'}</p>
-                  <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>{r.date}{r.session ? ` · ${r.session}` : ''}</p>
-                </div>
+        <>
+          <div
+            className="max-w-lg rounded-2xl p-5 relative overflow-hidden"
+            style={{ background: 'linear-gradient(120deg, var(--blue), var(--purple))', boxShadow: '0 12px 30px -10px var(--accent-solid-border)' }}
+          >
+            <Sparkles size={80} className="absolute -right-3 -top-4 opacity-15" style={{ color: '#fff' }} />
+            <div className="relative flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-white/20 ring-1 ring-inset ring-white/30">
+                <GraduationCap size={22} color="#fff" />
               </div>
-              <div className="text-right">
-                {r.leaveDays === null ? (
-                  <span className="text-xs" style={{ color: 'var(--ink-soft)' }}>First exam</span>
-                ) : (
-                  <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{ background: 'var(--bg)', color: r.leaveDays === 0 ? 'var(--danger)' : 'var(--success)' }}>
-                    {r.leaveDays} day{r.leaveDays === 1 ? '' : 's'} gap
+              <div>
+                <p className="font-display text-lg font-bold text-white flex items-center gap-1.5">
+                  All the best{profileName ? `, ${profileName.split(' ')[0]}` : ''}! <PartyPopper size={17} />
+                </p>
+                <p className="text-xs text-white/85 mt-0.5">
+                  {nextExam
+                    ? `Your next exam is ${nextExam.subject || 'coming up'} on ${nextExam.date}. Go crush it! 🎯`
+                    : "You've cleared all your listed exams — great work! 🎉"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3 max-w-lg">
+            {results.map((r, i) => {
+              const { label, tone } = daysToGoLabel(r.date);
+              const isNext = nextExam && r.date === nextExam.date && r.subject === nextExam.subject;
+              return (
+                <Card
+                  key={i}
+                  delay={i * 0.03}
+                  className="flex items-center justify-between"
+                  style={isNext ? { border: '1.5px solid var(--accent-solid-border)' } : undefined}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white"
+                      style={{ background: `linear-gradient(135deg, var(--blue), var(--purple))` }}
+                    >
+                      <CalendarClock size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: 'var(--ink)' }}>{r.subject || 'Exam'}</p>
+                      <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>{r.date}{r.session ? ` · ${r.session}` : ''}</p>
+                    </div>
+                  </div>
+                  <span
+                    className="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ml-2"
+                    style={{ background: `${TONE_COLOR[tone]}1A`, color: TONE_COLOR[tone] }}
+                  >
+                    {label}
                   </span>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
+                </Card>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

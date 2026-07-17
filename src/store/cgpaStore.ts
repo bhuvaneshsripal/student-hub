@@ -9,9 +9,18 @@ import {
 
 const seed: Semester[] = [];
 
+/** Grades that never contribute to the GPA denominator: SA (Shortage of
+ * Attendance — the student was debarred and never sat the exam) and WC
+ * (Withdrawal of Course). Including their credits in the total was making
+ * the CGPA come out lower than it actually is. 'U' (arrear/fail) is still
+ * counted, since the student did attempt that exam and scored 0 points —
+ * that's standard for GPA calculation. */
+const EXCLUDED_FROM_GPA: Grade[] = ['SA', 'WC'];
+
 export function semesterGPA(subjects: Subject[]) {
-  const totalCredits = subjects.reduce((s, x) => s + x.credits, 0);
-  const points = subjects.reduce(
+  const graded = subjects.filter((x) => !EXCLUDED_FROM_GPA.includes(x.grade));
+  const totalCredits = graded.reduce((s, x) => s + x.credits, 0);
+  const points = graded.reduce(
     (s, x) => s + x.credits * GRADE_POINTS[x.grade],
     0
   );

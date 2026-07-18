@@ -16,4 +16,4 @@
 //   5. Save this file and rebuild/redeploy the app.
 // ─────────────────────────────────────────────────────────────────────────
 
-export const EXAM_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR_AseyzjlBgoxH26bAetxC9I0kxFtDT7owVcNhrf9iLM1qlF7IVynlA_yWte5i03GVzmALgbie0U2s/pub?output=csv';
+export const EXAM_SHEET_CSV_URL = '';

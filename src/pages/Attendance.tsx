@@ -1,6 +1,10 @@
-import { useMemo, useState } from 'react';
-import { Plus, FileDown, Calculator, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { memo, useMemo, useState } from 'react';
+import {
+  Plus, FileDown, Calculator, ChevronLeft, ChevronRight, RotateCcw,
+  BookOpen,
+} from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Card, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -9,6 +13,7 @@ import {
   useAttendanceStore, attendancePercent, attendanceStatus,
   classesNeededForThreshold, classesCanMissForThreshold, SAFE_THRESHOLD, semesterDayCounts,
 } from '../store/attendanceStore';
+import type { AttendanceSubject } from '../types';
 import { useTimetableStore } from '../store/timetableStore';
 import { CalendarRange } from 'lucide-react';
 import { useToastStore } from '../store/toastStore';
@@ -16,14 +21,86 @@ import { useSettingsStore } from '../store/settingsStore';
 import { useConfirm } from '../hooks/useConfirm';
 import { exportAttendancePdf } from '../utils/pdf';
 
+type Status = 'safe' | 'warning' | 'danger' | 'completed';
+const STATUS_COLOR: Record<Status, string> = {
+  safe: 'var(--success)',
+  warning: 'var(--warning)',
+  danger: 'var(--danger)',
+  completed: 'var(--success)',
+};
+const STATUS_LABEL: Record<Status, string> = {
+  safe: 'Safe', warning: 'Warning', danger: 'Danger', completed: 'Completed',
+};
+
+interface SubjectRowProps {
+  subject: AttendanceSubject;
+  semesterOver: boolean;
+}
+
+/**
+ * Memoized and read-only (no per-row action buttons), so it never re-renders
+ * unless its own subject data changes — keeps the list snappy at 120fps+
+ * even as subject count grows. Motion here animates opacity/transform/scale
+ * only (compositor-friendly), never layout-triggering properties.
+ */
+const SubjectRow = memo(function SubjectRow({ subject, semesterOver }: SubjectRowProps) {
+  const pct = attendancePercent(subject);
+  const status: Status = semesterOver ? 'completed' : attendanceStatus(pct);
+  const color = STATUS_COLOR[status];
+
+  return (
+    <motion.div
+      layout="position"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.15 } }}
+      transition={{ type: 'spring', stiffness: 500, damping: 40, mass: 0.6 }}
+      style={{ willChange: 'transform, opacity', background: 'var(--bg)', border: '1px solid var(--line)' }}
+      className="rounded-xl p-2.5"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 flex items-center gap-1.5">
+          <span
+            className="w-1.5 h-1.5 rounded-full shrink-0"
+            style={{ background: color, boxShadow: `0 0 0 3px ${color}22` }}
+          />
+          <p className="font-display font-semibold text-xs truncate" style={{ color: 'var(--ink)' }}>{subject.name}</p>
+          <span className="text-[10px] shrink-0" style={{ color: 'var(--ink-soft)' }}>
+            {subject.attended}/{subject.total}
+          </span>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="font-display text-sm font-bold tabular-nums" style={{ color }}>
+            {pct.toFixed(1)}%
+          </span>
+          <span
+            className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+            style={{ background: `${color}1a`, color }}
+          >
+            {STATUS_LABEL[status]}
+          </span>
+        </div>
+      </div>
+      <div className="mt-1.5"><ProgressBar value={pct} color={color} height={5} /></div>
+    </motion.div>
+  );
+});
+
 export default function Attendance() {
-  const { subjects, addSubject, semesterStart, semesterEnd, setSemesterDates, resetAll } = useAttendanceStore();
+  const {
+    subjects, addSubject,
+    semesterStart, semesterEnd, setSemesterDates, resetAll,
+  } = useAttendanceStore();
   const clearAttendanceLogs = useTimetableStore((s) => s.clearAttendanceLogs);
   const colorScheme = useSettingsStore((s) => s.colorScheme);
   const push = useToastStore((s) => s.push);
   const { confirm, dialog } = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ name: '', total: 0, attended: 0 });
+  const semesterOver = useMemo(
+    () => !!semesterEnd && new Date() > new Date(semesterEnd + 'T23:59:59'),
+    [semesterEnd]
+  );
   const [calc, setCalc] = useState({ total: 40, attended: 32, target: SAFE_THRESHOLD });
   const semDays = semesterDayCounts(semesterStart, semesterEnd);
 
@@ -60,10 +137,19 @@ export default function Attendance() {
   function submit() {
     if (!form.name.trim()) { push('Subject name is required', 'error'); return; }
     if (form.attended > form.total) { push('Attended cannot exceed total classes', 'error'); return; }
-    addSubject(form.name, form.total, form.attended);
+    addSubject(form.name.trim(), form.total, form.attended);
     push('Subject added', 'success');
+    closeModal();
+  }
+
+  function openAdd() {
     setForm({ name: '', total: 0, attended: 0 });
+    setModalOpen(true);
+  }
+
+  function closeModal() {
     setModalOpen(false);
+    setForm({ name: '', total: 0, attended: 0 });
   }
 
   function handleExportPdf() {
@@ -96,9 +182,32 @@ export default function Attendance() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" icon={<RotateCcw size={14} />} onClick={handleResetAll}>Reset</Button>
           <Button variant="outline" size="sm" icon={<FileDown size={14} />} onClick={handleExportPdf}>Export PDF</Button>
-          <Button size="sm" icon={<Plus size={14} />} onClick={() => setModalOpen(true)}>Add Subject</Button>
+          <Button size="sm" icon={<Plus size={14} />} onClick={openAdd}>Add Subject</Button>
         </div>
       </div>
+
+      <Card>
+        <CardHeader
+          title="Subject-wise Attendance"
+          subtitle={subjects.length ? `${subjects.length} subject${subjects.length === 1 ? '' : 's'} tracked` : undefined}
+          icon={<BookOpen size={16} />}
+          color="purple"
+        />
+        {subjects.length === 0 ? (
+          <div className="rounded-2xl p-6 text-center" style={{ background: 'var(--bg)', border: '1px dashed var(--line)' }}>
+            <p className="text-sm mb-3" style={{ color: 'var(--ink-soft)' }}>No subjects yet — add one to start tracking per-subject attendance.</p>
+            <Button size="sm" icon={<Plus size={14} />} onClick={openAdd}>Add Subject</Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <AnimatePresence initial={false} mode="popLayout">
+              {subjects.map((s) => (
+                <SubjectRow key={s.id} subject={s} semesterOver={semesterOver} />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+      </Card>
 
       <Card>
         <CardHeader title="Semester Duration" icon={<CalendarRange size={16} />} color="blue" />
@@ -249,7 +358,7 @@ export default function Attendance() {
         )}
       </Card>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Subject">
+      <Modal open={modalOpen} onClose={closeModal} title="Add Subject">
         <div className="space-y-3">
           <label className="block">
             <span className="text-xs font-medium block mb-1" style={{ color: 'var(--ink-soft)' }}>Subject Name</span>
@@ -266,7 +375,7 @@ export default function Attendance() {
             </label>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={closeModal}>Cancel</Button>
             <Button onClick={submit}>Add Subject</Button>
           </div>
         </div>

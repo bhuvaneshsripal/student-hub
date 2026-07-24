@@ -40,6 +40,24 @@ function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+/** Parses a "YYYY-MM-DD" string (as stored by the Attendance page) into a
+ * local Date at midnight, or null if empty/invalid. */
+function parseIsoDate(s: string | undefined | null) {
+  if (!s) return null;
+  const d = new Date(s + 'T00:00:00');
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Clamps `d` so it never falls outside the [min, max] range (whichever
+ * bounds are actually set). Used to keep the Dashboard's Timetable date
+ * navigation inside the semester start/end dates chosen on the Attendance
+ * page. */
+function clampDate(d: Date, min: Date | null, max: Date | null) {
+  if (min && d < min) return new Date(min);
+  if (max && d > max) return new Date(max);
+  return d;
+}
+
 function greeting() {
   const h = new Date().getHours();
   if (h < 12) return 'Good morning';
@@ -57,6 +75,8 @@ export default function Dashboard() {
   const semesters = useCgpaStore((s) => s.semesters);
   const attendanceSubjects = useAttendanceStore((s) => s.subjects);
   const markClassOccurrence = useAttendanceStore((s) => s.markClassOccurrence);
+  const semesterStart = useAttendanceStore((s) => s.semesterStart);
+  const semesterEnd = useAttendanceStore((s) => s.semesterEnd);
   const tasks = useProductivityStore((s) => s.tasks);
   const events = useProductivityStore((s) => s.events);
   const pomodoroSessions = useProductivityStore((s) => s.pomodoroSessions);
@@ -68,6 +88,23 @@ export default function Dashboard() {
   const push = useToastStore((s) => s.push);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Semester start/end (set on the Attendance page) bound how far the
+  // Timetable card below can navigate - you can only browse dates that
+  // actually fall within the semester.
+  const semStartDate = parseIsoDate(semesterStart);
+  const semEndDate = parseIsoDate(semesterEnd);
+
+  function goToDate(next: Date) {
+    setSelectedDate(clampDate(next, semStartDate, semEndDate));
+  }
+
+  // If the semester range changes (or on first load) and the currently
+  // selected date falls outside it, snap back inside the range.
+  useEffect(() => {
+    setSelectedDate((d) => clampDate(d, semStartDate, semEndDate));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [semesterStart, semesterEnd]);
 
   const syncNotes = useProductivityStore((s) => s.syncNotes);
   const syncTasks = useProductivityStore((s) => s.syncTasks);
@@ -266,13 +303,15 @@ export default function Dashboard() {
             action={<Link to="/timetable" className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--blue)' }}>View all <ArrowRight size={12} /></Link>}
           />
 
-          {/* Month/year navigation — jumps by calendar month */}
+          {/* Month/year navigation - jumps by calendar month, clamped to
+              the semester start/end dates set on the Attendance page */}
           <div className="flex items-center justify-between mb-3">
             <button
-              onClick={() => setSelectedDate((d) => addMonths(d, -1))}
+              onClick={() => goToDate(addMonths(selectedDate, -1))}
+              disabled={!!semStartDate && selectedDate <= semStartDate}
               aria-label="Previous month"
               title="Previous month"
-              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06] disabled:opacity-30 disabled:pointer-events-none"
             >
               <ChevronLeft size={16} style={{ color: 'var(--ink-soft)' }} />
             </button>
@@ -280,22 +319,30 @@ export default function Dashboard() {
               {selectedDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }).toUpperCase()}
             </p>
             <button
-              onClick={() => setSelectedDate((d) => addMonths(d, 1))}
+              onClick={() => goToDate(addMonths(selectedDate, 1))}
+              disabled={!!semEndDate && selectedDate >= semEndDate}
               aria-label="Next month"
               title="Next month"
-              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06] disabled:opacity-30 disabled:pointer-events-none"
             >
               <ChevronRight size={16} style={{ color: 'var(--ink-soft)' }} />
             </button>
           </div>
+          {(semStartDate || semEndDate) && (
+            <p className="text-[11px] mb-3 -mt-1" style={{ color: 'var(--ink-soft)' }}>
+              Showing {semesterStart || '...'} to {semesterEnd || '...'} (set on the Attendance page)
+            </p>
+          )}
 
-          {/* Date strip — separate prev/next day arrows */}
+          {/* Date strip - separate prev/next day arrows, clamped to the
+              semester start/end dates set on the Attendance page */}
           <div className="flex items-center gap-1 mb-4">
             <button
-              onClick={() => setSelectedDate((d) => addDays(d, -1))}
+              onClick={() => goToDate(addDays(selectedDate, -1))}
+              disabled={!!semStartDate && selectedDate <= semStartDate}
               aria-label="Previous day"
               title="Previous day"
-              className="w-6 h-6 shrink-0 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              className="w-6 h-6 shrink-0 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06] disabled:opacity-30 disabled:pointer-events-none"
             >
               <ChevronLeft size={14} style={{ color: 'var(--ink-soft)' }} />
             </button>
@@ -303,11 +350,13 @@ export default function Dashboard() {
               {dateStrip.map((d) => {
                 const selected = sameDay(d, selectedDate);
                 const isToday = sameDay(d, now);
+                const outOfRange = !!((semStartDate && d < semStartDate) || (semEndDate && d > semEndDate));
                 return (
                   <button
                     key={toIso(d)}
-                    onClick={() => setSelectedDate(d)}
-                    className="flex flex-col items-center gap-0.5 py-2 rounded-xl transition-colors"
+                    onClick={() => goToDate(d)}
+                    disabled={outOfRange}
+                    className="flex flex-col items-center gap-0.5 py-2 rounded-xl transition-colors disabled:opacity-25 disabled:pointer-events-none"
                   >
                     <span className="text-[10px] font-medium uppercase" style={{ color: selected ? 'var(--blue)' : 'var(--ink-soft)' }}>
                       {d.toLocaleDateString(undefined, { weekday: 'short' })}
@@ -323,10 +372,11 @@ export default function Dashboard() {
               })}
             </div>
             <button
-              onClick={() => setSelectedDate((d) => addDays(d, 1))}
+              onClick={() => goToDate(addDays(selectedDate, 1))}
+              disabled={!!semEndDate && selectedDate >= semEndDate}
               aria-label="Next day"
               title="Next day"
-              className="w-6 h-6 shrink-0 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              className="w-6 h-6 shrink-0 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06] disabled:opacity-30 disabled:pointer-events-none"
             >
               <ChevronRight size={14} style={{ color: 'var(--ink-soft)' }} />
             </button>

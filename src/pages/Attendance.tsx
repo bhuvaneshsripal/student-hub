@@ -21,6 +21,23 @@ import { useSettingsStore } from '../store/settingsStore';
 import { useConfirm } from '../hooks/useConfirm';
 import { exportAttendancePdf } from '../utils/pdf';
 
+/** Parses a number input's raw string into a non-negative number, keeping
+ * decimals (e.g. "32.5") instead of the old `Number(...)` calls, which
+ * worked fine for decimals numerically but paired with plain type="number"
+ * inputs (no `step="any"`) made browsers treat decimal entries as invalid.
+ * Falls back to 0 for empty/invalid input rather than producing NaN. */
+function parseNonNegative(raw: string) {
+  const n = parseFloat(raw);
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+}
+
+/** Same as parseNonNegative but also clamped to an upper bound. */
+function parseClamped(raw: string, min: number, max: number) {
+  const n = parseFloat(raw);
+  if (!Number.isFinite(n)) return min;
+  return Math.min(max, Math.max(min, n));
+}
+
 type Status = 'safe' | 'warning' | 'danger' | 'completed';
 const STATUS_COLOR: Record<Status, string> = {
   safe: 'var(--success)',
@@ -292,24 +309,24 @@ export default function Attendance() {
           <label className="block">
             <span className="text-xs font-medium block mb-1" style={{ color: 'var(--ink-soft)' }}>Total classes held</span>
             <input
-              type="number" min={0} value={calc.total}
-              onChange={(e) => setCalc({ ...calc, total: Math.max(0, Number(e.target.value)) })}
+              type="number" min={0} step="any" inputMode="decimal" value={calc.total}
+              onChange={(e) => setCalc({ ...calc, total: parseNonNegative(e.target.value) })}
               className="calc-input"
             />
           </label>
           <label className="block">
             <span className="text-xs font-medium block mb-1" style={{ color: 'var(--ink-soft)' }}>Classes attended</span>
             <input
-              type="number" min={0} value={calc.attended}
-              onChange={(e) => setCalc({ ...calc, attended: Math.max(0, Number(e.target.value)) })}
+              type="number" min={0} step="any" inputMode="decimal" value={calc.attended}
+              onChange={(e) => setCalc({ ...calc, attended: parseNonNegative(e.target.value) })}
               className="calc-input"
             />
           </label>
           <label className="block">
             <span className="text-xs font-medium block mb-1" style={{ color: 'var(--ink-soft)' }}>Target attendance %</span>
             <input
-              type="number" min={1} max={100} value={calc.target}
-              onChange={(e) => setCalc({ ...calc, target: Math.min(100, Math.max(1, Number(e.target.value))) })}
+              type="number" min={0} max={100} step="any" inputMode="decimal" value={calc.target}
+              onChange={(e) => setCalc({ ...calc, target: parseClamped(e.target.value, 0, 100) })}
               className="calc-input"
             />
           </label>
@@ -367,11 +384,11 @@ export default function Attendance() {
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="text-xs font-medium block mb-1" style={{ color: 'var(--ink-soft)' }}>Total Classes</span>
-              <input type="number" min={0} value={form.total} onChange={(e) => setForm({ ...form, total: Number(e.target.value) })} className="input" />
+              <input type="number" min={0} step="any" inputMode="decimal" value={form.total} onChange={(e) => setForm({ ...form, total: parseNonNegative(e.target.value) })} className="input" />
             </label>
             <label className="block">
               <span className="text-xs font-medium block mb-1" style={{ color: 'var(--ink-soft)' }}>Classes Attended</span>
-              <input type="number" min={0} value={form.attended} onChange={(e) => setForm({ ...form, attended: Number(e.target.value) })} className="input" />
+              <input type="number" min={0} step="any" inputMode="decimal" value={form.attended} onChange={(e) => setForm({ ...form, attended: parseNonNegative(e.target.value) })} className="input" />
             </label>
           </div>
           <div className="flex justify-end gap-2 pt-2">

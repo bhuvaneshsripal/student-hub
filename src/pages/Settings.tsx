@@ -119,7 +119,7 @@ export default function Settings() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Notify before class</p>
-            <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Get a browser notification 15 minutes before each class in your timetable.</p>
+            <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Get a browser notification 10 minutes before each class in your timetable.</p>
           </div>
           <Switch
             checked={classReminders}

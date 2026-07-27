@@ -62,7 +62,7 @@ export const useSettingsStore = create<SettingsState>()(
       completeOnboarding: () => set({ hasOnboarded: true }),
       notificationSound: true,
       toggleNotificationSound: () => set((s) => ({ notificationSound: !s.notificationSound })),
-      classReminderMinutes: 15,
+      classReminderMinutes: 10,
       classReminders: true,
       toggleClassReminders: () => set((s) => ({ classReminders: !s.classReminders })),
       systemNotifications: false,

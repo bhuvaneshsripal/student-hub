@@ -73,6 +73,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+  // Login and account-creation are now separate, explicit actions — the
+  // form no longer silently creates a brand-new account whenever the
+  // typed email/password don't match an existing user (that let literally
+  // any made-up email "log in" by registering it on the spot).
+  const [mode, setMode] = useState<"login" | "signup">("login");
 
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -87,17 +92,26 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      try {
-        const result = await signInWithEmailAndPassword(auth, email.trim(), password);
-        await ensureUserDoc(result.user);
-      } catch (err: any) {
-        // No account yet with this email — create one automatically.
-        if (err?.code === "auth/user-not-found" || err?.code === "auth/invalid-credential") {
+      if (mode === "signup") {
+        try {
           const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
           await ensureUserDoc(result.user);
-        } else {
+        } catch (err: any) {
+          if (err?.code === "auth/email-already-in-use") {
+            // Account already exists — don't silently sign them in under
+            // someone else's account; send them to the login side instead.
+            setMode("login");
+            setError("An account with this email already exists. Log in instead.");
+            return;
+          }
           throw err;
         }
+      } else {
+        // Login only ever signs in an existing account. A wrong password
+        // or an email nobody registered both surface as a normal error —
+        // it never falls back to creating a new account.
+        const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+        await ensureUserDoc(result.user);
       }
       navigate("/");
     } catch (err: any) {
@@ -219,7 +233,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              autoComplete="current-password"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
               className="s2-pill-input"
             />
             <button
@@ -249,7 +263,18 @@ export default function Login() {
           </div>
 
           <button type="submit" disabled={loading} className="s2-login-btn">
-            {loading ? "Signing in..." : "Login"}
+            {loading ? (mode === "signup" ? "Creating account..." : "Signing in...") : mode === "signup" ? "Create account" : "Login"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMode((m) => (m === "login" ? "signup" : "login"));
+              setError("");
+            }}
+            className="s2-forgot mx-auto block pt-1"
+          >
+            {mode === "signup" ? "Already have an account? Log in" : "New to Studo? Create account"}
           </button>
         </form>
 
@@ -657,6 +682,8 @@ function friendlyAuthError(code?: string) {
     case "auth/wrong-password":
     case "auth/invalid-credential":
       return "Incorrect email or password.";
+    case "auth/user-not-found":
+      return "No account found with this email.";
     case "auth/invalid-email":
       return "Enter a valid email address.";
     case "auth/weak-password":

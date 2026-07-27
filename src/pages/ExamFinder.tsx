@@ -114,7 +114,7 @@ export default function ExamFinder() {
         <>
           <div
             className="max-w-lg rounded-2xl p-5 relative overflow-hidden"
-            style={{ background: 'linear-gradient(120deg, var(--blue), var(--purple))', boxShadow: '0 12px 30px -10px var(--accent-solid-border)' }}
+            style={{ background: 'linear-gradient(120deg, var(--blue), var(--purple))', boxShadow: 'var(--glow-shadow)' }}
           >
             <Sparkles size={80} className="absolute -right-3 -top-4 opacity-15" style={{ color: '#fff' }} />
             <div className="relative flex items-center gap-3">

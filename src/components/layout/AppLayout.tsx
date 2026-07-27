@@ -14,13 +14,13 @@ import { useClassReminders } from '../../hooks/useClassReminders';
 export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useSettingsStore((s) => s.theme);
-  const colorScheme = useSettingsStore((s) => s.colorScheme);
+  const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed);
 
   useClassReminders();
 
   useEffect(() => {
-    applyTheme(theme, colorScheme);
-  }, [theme, colorScheme]);
+    applyTheme(theme);
+  }, [theme]);
 
   // Lock body scroll while the mobile drawer is open so the page behind it
   // doesn't scroll and bleed through/overlay the menu.
@@ -34,8 +34,11 @@ export function AppLayout() {
       <OnboardingModal />
       <ToastContainer />
       {/* Desktop sidebar */}
-      <aside className="hidden md:block w-64 shrink-0 border-r" style={{ borderColor: 'var(--line)' }}>
-        <Sidebar />
+      <aside
+        className="hidden md:block shrink-0 border-r overflow-hidden transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        style={{ borderColor: 'var(--sidebar-line)', background: 'var(--sidebar-bg)', width: sidebarCollapsed ? 76 : 256 }}
+      >
+        <Sidebar collapsible />
       </aside>
 
       {/* Mobile sidebar drawer */}
@@ -46,14 +49,18 @@ export function AppLayout() {
             <motion.div
               initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute left-0 top-0 h-full w-72 max-w-[80vw] nav-panel border-r overflow-y-auto"
+              className="absolute left-0 top-0 h-full w-72 max-w-[80vw] border-r overflow-y-auto"
+              style={{ background: 'var(--sidebar-bg)', borderColor: 'var(--sidebar-line)' }}
             >
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label="Close menu"
-                className="absolute top-4 right-3 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-black/[0.06] dark:hover:bg-white/[0.08]"
+                className="absolute top-4 right-3 w-9 h-9 flex items-center justify-center rounded-lg transition-colors"
+                style={{ color: 'var(--sidebar-ink)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--sidebar-hover)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               >
-                <X size={18} style={{ color: 'var(--ink)' }} />
+                <X size={18} />
               </button>
               <Sidebar onNavigate={() => setMobileOpen(false)} />
             </motion.div>

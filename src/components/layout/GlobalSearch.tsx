@@ -12,7 +12,14 @@ interface Result {
   to: string;
 }
 
-export function GlobalSearch() {
+interface GlobalSearchProps {
+  /** Notified whenever the search box expands or collapses, so the parent
+   * Topbar can hide its other controls (theme toggle, notifications,
+   * avatar, logout) on mobile while the search box is active. */
+  onExpandedChange?: (expanded: boolean) => void;
+}
+
+export function GlobalSearch({ onExpandedChange }: GlobalSearchProps = {}) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -33,16 +40,21 @@ export function GlobalSearch() {
     function onClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
-        setExpanded((wasExpanded) => (query.trim() ? wasExpanded : false));
+        setExpanded((wasExpanded) => {
+          const next = query.trim() ? wasExpanded : false;
+          onExpandedChange?.(next);
+          return next;
+        });
       }
     }
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
-  }, [query]);
+  }, [query, onExpandedChange]);
 
   function openSearch() {
     setExpanded(true);
     setOpen(true);
+    onExpandedChange?.(true);
     setTimeout(() => inputRef.current?.focus(), 0);
   }
 
@@ -50,6 +62,7 @@ export function GlobalSearch() {
     setQuery('');
     setOpen(false);
     setExpanded(false);
+    onExpandedChange?.(false);
   }
 
   const results: Result[] = useMemo(() => {
@@ -95,7 +108,7 @@ export function GlobalSearch() {
   }
 
   return (
-    <div ref={ref} className="relative w-full max-w-sm">
+    <div ref={ref} className="relative w-full md:max-w-sm">
       <div className="flex items-center gap-2 rounded-xl px-3 py-2 search-bar">
         <Search size={16} style={{ color: 'var(--ink-soft)' }} />
         <input
@@ -105,15 +118,15 @@ export function GlobalSearch() {
           onFocus={() => setOpen(true)}
           onKeyDown={(e) => { if (e.key === 'Escape') closeSearch(); }}
           placeholder="Search timetable, notes, tasks..."
-          className="bg-transparent outline-none text-sm w-full"
-          style={{ color: 'var(--ink)' }}
+          className="bg-transparent outline-none ring-0 shadow-none text-sm w-full"
+          style={{ color: 'var(--ink)', outline: 'none', boxShadow: 'none' }}
         />
         <button onClick={closeSearch} aria-label="Close search">
           <X size={14} style={{ color: 'var(--ink-soft)' }} />
         </button>
       </div>
       {open && results.length > 0 && (
-        <div className="absolute mt-2 w-full glass-solid rounded-xl overflow-hidden z-50 shadow-xl" style={{ background: 'var(--glass-solid)' }}>
+        <div className="absolute mt-2 w-full glass-solid rounded-2xl overflow-hidden z-50" style={{ background: 'var(--glass-solid)' }}>
           {results.map((r) => (
             <button
               key={r.section + r.id}

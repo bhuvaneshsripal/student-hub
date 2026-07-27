@@ -24,6 +24,17 @@ function toIso(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+/** Strips the time-of-day so every date used in comparisons (selected date,
+ * semester start/end, "today") lines up exactly at midnight. Without this,
+ * a date carrying the current time-of-day (e.g. 10:43 AM) could compare as
+ * "after" a semester end date stored at midnight, silently disabling that
+ * day's button. */
+function startOfDay(d: Date) {
+  const copy = new Date(d);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
 function addDays(d: Date, n: number) {
   const copy = new Date(d);
   copy.setDate(copy.getDate() + n);
@@ -51,11 +62,13 @@ function parseIsoDate(s: string | undefined | null) {
 /** Clamps `d` so it never falls outside the [min, max] range (whichever
  * bounds are actually set). Used to keep the Dashboard's Timetable date
  * navigation inside the semester start/end dates chosen on the Attendance
- * page. */
+ * page. All three dates are compared at midnight so a date isn't wrongly
+ * treated as out-of-range just because of its time-of-day. */
 function clampDate(d: Date, min: Date | null, max: Date | null) {
-  if (min && d < min) return new Date(min);
-  if (max && d > max) return new Date(max);
-  return d;
+  const day = startOfDay(d);
+  if (min && day < min) return new Date(min);
+  if (max && day > max) return new Date(max);
+  return day;
 }
 
 function greeting() {
@@ -87,7 +100,14 @@ export default function Dashboard() {
   const syncPlacement = usePlacementStore((s) => s.sync);
   const push = useToastStore((s) => s.push);
 
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()));
+  // Left-most date shown in the 7-day strip. Kept separate from
+  // `selectedDate` so tapping a day only updates the schedule below it —
+  // the strip itself stays put and only slides once the selected day
+  // scrolls off either edge. Previously the strip re-centered on every
+  // tap, which reshuffled all 7 buttons and made it look like the click
+  // hadn't registered.
+  const [weekAnchor, setWeekAnchor] = useState(() => addDays(startOfDay(new Date()), -3));
 
   // Semester start/end (set on the Attendance page) bound how far the
   // Timetable card below can navigate - you can only browse dates that
@@ -96,13 +116,40 @@ export default function Dashboard() {
   const semEndDate = parseIsoDate(semesterEnd);
 
   function goToDate(next: Date) {
-    setSelectedDate(clampDate(next, semStartDate, semEndDate));
+    const clamped = clampDate(next, semStartDate, semEndDate);
+    setSelectedDate(clamped);
+    // Re-center the visible strip only when the new date has scrolled
+    // outside it, so clicking a day already on screen doesn't move it.
+    setWeekAnchor((anchor) => {
+      const daysFromAnchor = Math.round((clamped.getTime() - anchor.getTime()) / 86400000);
+      return daysFromAnchor >= 0 && daysFromAnchor <= 6 ? anchor : addDays(clamped, -3);
+    });
+  }
+
+  /** Selects a date tapped directly in the 7-day strip. Unlike `goToDate`
+   * (used by the prev/next arrows, which step within the semester range),
+   * this does NOT clamp — days outside the semester range stay tappable so
+   * the "No schedule on ..." message underneath can still show for them. */
+  function selectDate(next: Date) {
+    const day = startOfDay(next);
+    setSelectedDate(day);
+    setWeekAnchor((anchor) => {
+      const daysFromAnchor = Math.round((day.getTime() - anchor.getTime()) / 86400000);
+      return daysFromAnchor >= 0 && daysFromAnchor <= 6 ? anchor : addDays(day, -3);
+    });
   }
 
   // If the semester range changes (or on first load) and the currently
   // selected date falls outside it, snap back inside the range.
   useEffect(() => {
-    setSelectedDate((d) => clampDate(d, semStartDate, semEndDate));
+    setSelectedDate((d) => {
+      const clamped = clampDate(d, semStartDate, semEndDate);
+      setWeekAnchor((anchor) => {
+        const daysFromAnchor = Math.round((clamped.getTime() - anchor.getTime()) / 86400000);
+        return daysFromAnchor >= 0 && daysFromAnchor <= 6 ? anchor : addDays(clamped, -3);
+      });
+      return clamped;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [semesterStart, semesterEnd]);
 
@@ -200,7 +247,7 @@ export default function Dashboard() {
   const selectedDayName = DAYS[(selectedDate.getDay() + 6) % 7] ?? null; // Sunday not in DAYS
   const selectedClasses = classes.filter((c) => c.day === selectedDayName).sort((a, b) => a.start.localeCompare(b.start));
   const selectedBlocks = buildBlocks(selectedClasses);
-  const dateStrip = Array.from({ length: 7 }, (_, i) => addDays(selectedDate, i - 3));
+  const dateStrip = Array.from({ length: 7 }, (_, i) => addDays(weekAnchor, i));
 
   const cgpa = overallCGPA(semesters);
   const avgAttendance = attendanceSubjects.length
@@ -350,13 +397,14 @@ export default function Dashboard() {
               {dateStrip.map((d) => {
                 const selected = sameDay(d, selectedDate);
                 const isToday = sameDay(d, now);
-                const outOfRange = !!((semStartDate && d < semStartDate) || (semEndDate && d > semEndDate));
+                const outOfRange = !!((semStartDate && startOfDay(d) < semStartDate) || (semEndDate && startOfDay(d) > semEndDate));
                 return (
                   <button
                     key={toIso(d)}
-                    onClick={() => goToDate(d)}
-                    disabled={outOfRange}
-                    className="flex flex-col items-center gap-0.5 py-2 rounded-xl transition-colors disabled:opacity-25 disabled:pointer-events-none"
+                    onClick={() => selectDate(d)}
+                    title={outOfRange ? 'Outside semester range' : undefined}
+                    className="flex flex-col items-center gap-0.5 py-2 rounded-xl transition-colors"
+                    style={{ opacity: outOfRange ? 0.4 : 1 }}
                   >
                     <span className="text-[10px] font-medium uppercase" style={{ color: selected ? 'var(--blue)' : 'var(--ink-soft)' }}>
                       {d.toLocaleDateString(undefined, { weekday: 'short' })}
@@ -383,7 +431,14 @@ export default function Dashboard() {
           </div>
 
           {selectedBlocks.length === 0 ? (
-            <p className="text-sm py-6 text-center" style={{ color: 'var(--ink-soft)' }}>No classes scheduled. Enjoy the day! 🎉</p>
+            <button
+              type="button"
+              onClick={() => push(`No schedule on ${selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}`, 'info')}
+              className="w-full text-sm py-6 text-center rounded-xl hover:bg-black/[0.03] dark:hover:bg-white/[0.05] transition-colors"
+              style={{ color: 'var(--ink-soft)' }}
+            >
+              No schedule on {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+            </button>
           ) : (
             <div className="divide-y" style={{ borderColor: 'var(--line)' }}>
               {selectedBlocks.map((b) => {

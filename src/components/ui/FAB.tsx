@@ -52,7 +52,7 @@ export function FAB() {
         onClick={() => setOpen((o) => !o)}
         whileTap={{ scale: 0.92 }}
         animate={{ rotate: open ? 45 : 0 }}
-        className="w-14 h-14 rounded-full bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] text-[var(--on-accent)] flex items-center justify-center shadow-xl shadow-[var(--purple)]/30"
+        className="w-14 h-14 rounded-full bg-[var(--blue)] text-[var(--on-accent)] flex items-center justify-center shadow-md shadow-[var(--blue)]/15 dark:shadow-none"
       >
         {open ? <X size={22} /> : <Plus size={22} />}
       </motion.button>

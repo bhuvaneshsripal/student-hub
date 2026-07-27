@@ -17,7 +17,6 @@ import type { AttendanceSubject } from '../types';
 import { useTimetableStore } from '../store/timetableStore';
 import { CalendarRange } from 'lucide-react';
 import { useToastStore } from '../store/toastStore';
-import { useSettingsStore } from '../store/settingsStore';
 import { useConfirm } from '../hooks/useConfirm';
 import { exportAttendancePdf } from '../utils/pdf';
 
@@ -109,7 +108,6 @@ export default function Attendance() {
     semesterStart, semesterEnd, setSemesterDates, resetAll,
   } = useAttendanceStore();
   const clearAttendanceLogs = useTimetableStore((s) => s.clearAttendanceLogs);
-  const colorScheme = useSettingsStore((s) => s.colorScheme);
   const push = useToastStore((s) => s.push);
   const { confirm, dialog } = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
@@ -171,7 +169,7 @@ export default function Attendance() {
 
   function handleExportPdf() {
     if (!subjects.length) { push('Add at least one subject before exporting', 'error'); return; }
-    exportAttendancePdf(subjects, colorScheme);
+    exportAttendancePdf(subjects);
     push('Attendance PDF downloaded', 'success');
   }
 

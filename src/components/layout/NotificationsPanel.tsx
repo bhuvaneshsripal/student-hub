@@ -41,7 +41,7 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
       initial={{ opacity: 0, y: -8, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.97 }}
-      className="fixed left-4 right-4 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-80 accent-solid rounded-2xl p-2 shadow-xl z-50 max-h-[70vh] overflow-y-auto"
+      className="fixed left-4 right-4 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-80 accent-solid rounded-[20px] p-2 z-50 max-h-[70vh] overflow-y-auto"
       style={{ background: 'var(--accent-solid)' }}
     >
       <div className="flex items-center justify-between px-3 py-2 sticky top-0" style={{ background: 'var(--accent-solid)' }}>

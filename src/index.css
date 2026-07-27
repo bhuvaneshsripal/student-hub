@@ -1,91 +1,83 @@
 @import "tailwindcss";
 
 :root {
+  /* Light theme: white surfaces, a pale green-tinted sidebar, one flat
+     dark-green accent — minimalist, border-led (not shadow-led), plenty
+     of whitespace. No gradients, no colored glow. */
   --bg: #FFFFFF;
-  --bg-elev: #F7FAFF;
-  --ink: #0F172A;
-  --ink-soft: #64748B;
-  --line: rgba(37, 99, 235, 0.16);
-  --glass: rgba(239, 246, 255, 0.68);
+  --bg-elev: #F6FAF7;
+  --login-bg: #FFFFFF;
+  --ink: #16231C;
+  --ink-soft: #5C6B62;
+  --line: rgba(15, 30, 22, 0.10);
+  --glass: rgba(255, 255, 255, 0.86);
   --glass-solid: #FFFFFF;
-  --glass-border: rgba(59, 130, 246, 0.30);
-  --blue: #2563EB;
-  --purple: #3B82F6;
+  --glass-border: rgba(15, 30, 22, 0.10);
+  /* --blue / --purple are kept equal so every gradient in the app
+     (buttons, badges, active states, grad-text) renders as one flat
+     dark green instead of a two-tone glow. */
+  --blue: #1F5C3D;
+  --purple: #1F5C3D;
   --cyan: #0EA5E9;
   --pink: #EC4899;
-  --green: #10B981;
+  --green: #1F5C3D;
   --orange: #FF9F1C;
   --success: #17B26A;
   --warning: #F59E0B;
   --danger: #F04438;
-  --shadow: 0 10px 40px -12px rgba(37, 99, 235, 0.30);
-  --accent-solid: #EFF6FF;
-  --accent-solid-border: #3B82F6;
-  --search-bg: rgba(239, 246, 255, 0.6);
-  --search-border: rgba(59, 130, 246, 0.30);
+  /* Elevation is carried by a 1px border almost everywhere now; this
+     shadow is deliberately faint — a hint of lift, not a glow. */
+  --shadow: 0 2px 10px -4px rgba(15, 23, 20, 0.07);
+  --accent-solid: #F0FDF4;
+  --accent-solid-border: #1F5C3D;
+  --search-bg: rgba(255, 255, 255, 0.7);
+  --search-border: rgba(15, 30, 22, 0.10);
   --nav-panel: rgba(255, 255, 255, 0.97);
-  --nav-panel-border: rgba(59, 130, 246, 0.20);
-  /* Text/icon color placed ON TOP of the --blue → --purple gradient
-     (buttons, active nav link, avatars, FAB, checkmarks). Must stay high
-     contrast against whichever accent gradient is active. White reads
-     clearly against the blue/purple gradient; the yellow scheme below
-     overrides this to a dark ink color instead. */
+  --nav-panel-border: rgba(15, 30, 22, 0.10);
+  /* Text/icon color placed ON TOP of the flat green accent (buttons,
+     active nav link, avatars, FAB, checkmarks). White reads clearly
+     against the dark green. */
   --on-accent: #FFFFFF;
+  /* Decorative glow shadows (buttons, FAB, badges). Present in light
+     mode, stripped to nothing in dark mode below. */
+  --glow-shadow: 0 12px 30px -10px var(--accent-solid-border);
+  --sidebar-bg: #FFFFFF;
+  --sidebar-bg-elev: #F6FAF7;
+  --sidebar-ink: #16231C;
+  --sidebar-ink-soft: #5C6B62;
+  --sidebar-line: rgba(15, 30, 22, 0.10);
+  --sidebar-hover: rgba(15, 30, 22, 0.04);
 }
 
 .dark {
+  /* Dark theme: strictly black and white — no colored glow anywhere,
+     not on outlines, borders, buttons, badges, or shadows. Green is
+     kept only as flat text/icon color on small accent elements. */
   --bg: #000000;
-  --bg-elev: #0A0E1A;
-  --ink: #E7ECF7;
-  --ink-soft: #94A3B8;
-  --line: rgba(59, 130, 246, 0.18);
-  --glass: rgba(9, 13, 24, 0.65);
-  --glass-solid: #0A0E1A;
-  --glass-border: rgba(59, 130, 246, 0.30);
-  --blue: #3B82F6;
-  --purple: #60A5FA;
-  --shadow: 0 10px 40px -12px rgba(59, 130, 246, 0.35);
-  --accent-solid: #0B1A33;
-  --accent-solid-border: #3B82F6;
-  --search-bg: rgba(255, 255, 255, 0.07);
-  --search-border: rgba(59, 130, 246, 0.35);
-  --nav-panel: rgba(3, 6, 14, 0.97);
-  --nav-panel-border: rgba(59, 130, 246, 0.22);
-}
-
-/* Yellow color scheme — swaps the accent hue used across gradients,
-   borders, and highlights (buttons, active nav link, FAB, avatars, rings)
-   while keeping the light/dark mode variables (--bg, --ink, etc.)
-   untouched, so yellow can be combined with either light or dark mode. */
-.theme-yellow {
-  --blue: #F5A800;
-  --purple: #FFCB3D;
-  --line: rgba(217, 119, 6, 0.18);
-  --glass: rgba(255, 251, 235, 0.68);
-  --glass-border: rgba(245, 168, 0, 0.35);
-  --shadow: 0 10px 40px -12px rgba(217, 119, 6, 0.30);
-  --accent-solid: #FFFBEB;
-  --accent-solid-border: #F5A800;
-  --search-bg: rgba(255, 251, 235, 0.6);
-  --search-border: rgba(245, 168, 0, 0.30);
-  --nav-panel-border: rgba(245, 168, 0, 0.20);
-  /* Dark text reads clearly against the yellow/gold gradient. */
-  --on-accent: #171200;
-}
-
-.theme-yellow.dark {
-  --blue: #F5A800;
-  --purple: #FBBF24;
-  --line: rgba(245, 168, 0, 0.18);
-  --glass: rgba(24, 18, 3, 0.65);
-  --glass-border: rgba(245, 168, 0, 0.30);
-  --shadow: 0 10px 40px -12px rgba(245, 168, 0, 0.35);
-  --accent-solid: #241C05;
-  --accent-solid-border: #F5A800;
-  --search-bg: rgba(255, 255, 255, 0.07);
-  --search-border: rgba(245, 168, 0, 0.35);
-  --nav-panel-border: rgba(245, 168, 0, 0.22);
-  --on-accent: #171200;
+  --bg-elev: #0A0A0A;
+  --login-bg: #000000;
+  --ink: #FFFFFF;
+  --ink-soft: #B8B8B8;
+  --line: rgba(255, 255, 255, 0.14);
+  --glass: rgba(10, 10, 10, 0.72);
+  --glass-solid: #0A0A0A;
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --blue: #22C55E;
+  --purple: #22C55E;
+  --shadow: 0 2px 10px -4px rgba(0, 0, 0, 0.5);
+  --accent-solid: #111111;
+  --accent-solid-border: #22C55E;
+  --search-bg: rgba(255, 255, 255, 0.06);
+  --search-border: rgba(255, 255, 255, 0.14);
+  --nav-panel: rgba(0, 0, 0, 0.97);
+  --nav-panel-border: rgba(255, 255, 255, 0.14);
+  --glow-shadow: none;
+  --sidebar-bg: #000000;
+  --sidebar-bg-elev: #0A0A0A;
+  --sidebar-ink: #FFFFFF;
+  --sidebar-ink-soft: #B8B8B8;
+  --sidebar-line: rgba(255, 255, 255, 0.14);
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
 }
 
 * {
@@ -105,55 +97,37 @@ body {
 }
 
 .font-display {
-  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  /* One clean sans-serif throughout (Apple/Notion-style type system) —
+     Inter carries both body copy and headings, just heavier weight. */
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* App wordmark (sidebar logo text) — always a fixed dark green,
+   regardless of light/dark theme, per brand styling. */
+.font-brand {
+  font-family: 'Cormorant Garamond', 'Space Grotesk', serif;
+  color: #1F5C3D;
+  font-weight: 700;
 }
 
 .font-mono {
   font-family: 'JetBrains Mono', monospace;
 }
 
+/* Minimalist canvas: a very soft green-tinted wash in the top corners,
+   no grid lines — keeps focus on the whitespace between cards rather
+   than the page background itself (Wealthfront/Notion-style restraint). */
 .bg-mesh {
   background-image:
-    radial-gradient(at 15% 10%, rgba(37, 99, 235, 0.16) 0px, transparent 55%),
-    radial-gradient(at 85% 0%, rgba(59, 130, 246, 0.13) 0px, transparent 50%),
-    radial-gradient(at 90% 90%, rgba(96, 165, 250, 0.11) 0px, transparent 50%),
-    linear-gradient(to right, rgba(37, 99, 235, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(37, 99, 235, 0.07) 1px, transparent 1px);
-  background-size: auto, auto, auto, 26px 26px, 26px 26px;
-  background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
+    radial-gradient(at 10% 0%, rgba(31, 92, 61, 0.05) 0px, transparent 45%),
+    radial-gradient(at 100% 0%, rgba(31, 92, 61, 0.04) 0px, transparent 40%);
   background-attachment: fixed;
 }
 
 .dark .bg-mesh {
-  background-image:
-    radial-gradient(at 15% 10%, rgba(59, 130, 246, 0.08) 0px, transparent 55%),
-    radial-gradient(at 85% 0%, rgba(96, 165, 250, 0.06) 0px, transparent 50%),
-    radial-gradient(at 90% 90%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
-    linear-gradient(to right, rgba(59, 130, 246, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(59, 130, 246, 0.06) 1px, transparent 1px);
-  background-size: auto, auto, auto, 26px 26px, 26px 26px;
-}
-
-.theme-yellow .bg-mesh {
-  background-image:
-    radial-gradient(at 15% 10%, rgba(245, 168, 0, 0.16) 0px, transparent 55%),
-    radial-gradient(at 85% 0%, rgba(255, 203, 61, 0.13) 0px, transparent 50%),
-    radial-gradient(at 90% 90%, rgba(251, 191, 36, 0.11) 0px, transparent 50%),
-    linear-gradient(to right, rgba(217, 119, 6, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(217, 119, 6, 0.07) 1px, transparent 1px);
-  background-size: auto, auto, auto, 26px 26px, 26px 26px;
-  background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
-  background-attachment: fixed;
-}
-
-.theme-yellow.dark .bg-mesh {
-  background-image:
-    radial-gradient(at 15% 10%, rgba(245, 168, 0, 0.08) 0px, transparent 55%),
-    radial-gradient(at 85% 0%, rgba(251, 191, 36, 0.06) 0px, transparent 50%),
-    radial-gradient(at 90% 90%, rgba(217, 119, 6, 0.05) 0px, transparent 50%),
-    linear-gradient(to right, rgba(245, 168, 0, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(245, 168, 0, 0.06) 1px, transparent 1px);
-  background-size: auto, auto, auto, 26px 26px, 26px 26px;
+  /* Flat black in dark mode — no glow. */
+  background-image: none;
 }
 
 .glass {
@@ -173,7 +147,7 @@ body {
   box-shadow: var(--shadow);
 }
 
-/* Solid opaque yellow surface (theme accent color) used for the
+/* Solid opaque accent surface (green accent color) used for the
    notifications panel and the JSON restore notice. */
 .accent-solid {
   background: var(--accent-solid);
@@ -183,10 +157,16 @@ body {
 
 /* Navigation menu surface: a clean, near-opaque light-white panel (dark
    surface in dark mode) so the mobile nav drawer reads clearly against the
-   blurred page behind it instead of blending into the yellow mesh
-   background. High opacity keeps it reliable on mobile, where
-   backdrop-filter support is inconsistent; the blur is a bonus, not a
-   requirement. */
+   blurred page behind it instead of blending into the mesh background.
+   High opacity keeps it reliable on mobile, where backdrop-filter support
+   is inconsistent; the blur is a bonus, not a requirement. */
+/* Sidebar nav links live on the fixed dark-sandal surface in both app
+   themes, so their hover state uses the sidebar's own light-on-dark
+   variables instead of the light/dark theme hover classes. */
+.sidebar-link:hover {
+  background: var(--sidebar-hover);
+}
+
 .nav-panel {
   background: var(--nav-panel);
   backdrop-filter: blur(6px);
@@ -197,25 +177,35 @@ body {
 .search-bar {
   position: relative;
   background: var(--search-bg);
-  border: 1.5px solid transparent;
-  background-image: linear-gradient(var(--search-bg), var(--search-bg)), linear-gradient(90deg, var(--blue), var(--purple));
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: 0 4px 16px -8px var(--accent-solid-border);
-  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  border: 1px solid transparent;
+  outline: none;
+  box-shadow: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 }
 
 .search-bar:focus-within {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), linear-gradient(90deg, var(--blue), var(--purple));
-  box-shadow: 0 6px 22px -6px var(--accent-solid-border);
+  background: var(--glass-solid);
+  /* Subtle light-gray border instead of the browser's default blue
+     focus ring/box-shadow — kept flat and understated on purpose. */
+  border-color: var(--line);
+  outline: none;
+  box-shadow: none;
 }
 
-.dark .search-bar:focus-within {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.12)), linear-gradient(90deg, var(--blue), var(--purple));
+/* The search icon button (collapsed state) and the text input itself are
+   both natively focusable, so browsers would otherwise draw their own
+   blue outline/ring directly on them regardless of the wrapper above. */
+.search-bar:focus,
+.search-bar input:focus,
+.search-bar button:focus,
+.search-bar input:focus-visible,
+.search-bar button:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .search-bar svg {
-  color: var(--blue) !important;
+  color: var(--ink-soft) !important;
 }
 
 .grad-text {
@@ -226,10 +216,14 @@ body {
 }
 
 .brand-text {
-  background: linear-gradient(100deg, #1D4ED8, #2563EB, #3B82F6, #60A5FA);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--ink);
+}
+
+/* Icon badges on card headers (CardHeader). Colorful but small in light
+   mode; in dark mode the colored glow behind them is stripped so nothing
+   but flat black/white/green ever "glows". */
+.dark .badge-icon {
+  box-shadow: none !important;
 }
 
 .grad-ring {
@@ -257,9 +251,7 @@ body, main, .overflow-y-auto {
    screens where it actually matters. */
 @media (max-width: 768px) {
   .bg-mesh,
-  .dark .bg-mesh,
-  .theme-yellow .bg-mesh,
-  .theme-yellow.dark .bg-mesh {
+  .dark .bg-mesh {
     background-attachment: scroll;
   }
 
@@ -286,7 +278,7 @@ body, main, .overflow-y-auto {
 }
 
 :focus-visible {
-  outline: 2px solid var(--purple);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 

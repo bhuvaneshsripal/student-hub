@@ -1,11 +1,8 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
-import { Camera, Pencil, Check, Settings as SettingsIcon, ZoomIn, RotateCcw, User, Bot, Hash, Building2, GraduationCap, Layers, Mail } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Pencil, Check, Settings as SettingsIcon, User, Bot, Hash, Building2, GraduationCap, Layers, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSettingsStore } from '../store/settingsStore';
-import { useToastStore } from '../store/toastStore';
 import { auth } from '../firebase';
-
-const OUTPUT_SIZE = 400;
 
 const FIELD_ICONS: Record<string, typeof User> = {
   'Student Name': User,
@@ -17,18 +14,13 @@ const FIELD_ICONS: Record<string, typeof User> = {
 
 export default function Profile() {
   const { profile, updateProfile } = useSettingsStore();
-  const push = useToastStore((s) => s.push);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [cropSrc, setCropSrc] = useState<string | null>(null);
-
-  function handlePick(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setCropSrc(reader.result as string);
-    reader.readAsDataURL(file);
-  }
+  // See Topbar.tsx for why this exists: Google's profile photo URL can
+  // fail to load (blocked by an extension, expired, offline, etc), and
+  // without this it leaves a broken-image icon instead of a clean fallback.
+  const [avatarBroken, setAvatarBroken] = useState(false);
+  useEffect(() => {
+    setAvatarBroken(false);
+  }, [profile.avatar]);
 
   const nameParts = [profile.department.trim(), profile.year.trim()].filter(Boolean);
 
@@ -51,37 +43,22 @@ export default function Profile() {
       </div>
 
       <div className="flex items-center gap-5">
-        <div className="relative">
-          <div className="w-25 h-25 rounded-2xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[var(--on-accent)] font-display font-bold text-2xl overflow-hidden">
-            {profile.avatar ? (
-              <img src={profile.avatar} alt="avatar" className="w-full h-full object-cover" />
-            ) : profile.name.trim() ? (
-              profile.name.trim().split(' ').map((n) => n[0]).slice(0, 2).join('')
-            ) : (
-              <Bot size={32} />
-            )}
-          </div>
-          <div className="absolute -bottom-1 -right-1 flex items-center gap-1">
-            <button
-              onClick={() => fileRef.current?.click()}
-              aria-label="Upload profile picture"
-              title="Upload photo"
-              className="w-7 h-7 rounded-full glass flex items-center justify-center"
-            >
-              <Camera size={13} style={{ color: 'var(--ink)' }} />
-            </button>
-            {profile.avatar && (
-              <button
-                onClick={() => setCropSrc(profile.avatar)}
-                aria-label="Edit and crop profile picture"
-                title="Edit / crop"
-                className="w-7 h-7 rounded-full glass flex items-center justify-center"
-              >
-                <Pencil size={12} style={{ color: 'var(--ink)' }} />
-              </button>
-            )}
-          </div>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handlePick} className="hidden" />
+        {/* Picture is synced automatically from your signed-in account
+            (e.g. Google profile photo) — no manual upload here. */}
+        <div className="w-25 h-25 rounded-2xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[var(--on-accent)] font-display font-bold text-2xl overflow-hidden shrink-0">
+          {profile.avatar && !avatarBroken ? (
+            <img
+              src={profile.avatar}
+              alt="avatar"
+              referrerPolicy="no-referrer"
+              onError={() => setAvatarBroken(true)}
+              className="w-full h-full object-cover"
+            />
+          ) : profile.name.trim() ? (
+            profile.name.trim().split(' ').map((n) => n[0]).slice(0, 2).join('')
+          ) : (
+            <Bot size={32} />
+          )}
         </div>
         <div>
           <h2 className="font-display font-semibold text-lg" style={{ color: 'var(--ink)' }}>
@@ -118,18 +95,6 @@ export default function Profile() {
           <FieldRowStatic label="Email" value={auth.currentUser?.email ?? ''} />
         </div>
       </div>
-
-      {cropSrc && (
-        <CropModal
-          src={cropSrc}
-          onCancel={() => setCropSrc(null)}
-          onSave={(dataUrl) => {
-            updateProfile({ avatar: dataUrl });
-            push('Profile picture updated', 'success');
-            setCropSrc(null);
-          }}
-        />
-      )}
     </div>
   );
 }
@@ -200,122 +165,6 @@ function FieldRowStatic({ label, value }: { label: string; value: string }) {
         <p className="text-[15px] truncate" style={{ color: value ? 'var(--ink)' : 'var(--ink-soft)' }}>
           {value || 'Not signed in'}
         </p>
-      </div>
-    </div>
-  );
-}
-
-/** Lightweight crop tool: pan (drag) + zoom (slider) over a fixed square
- * viewport, rendered out to a fixed-size square image on save. Avoids
- * pulling in an external cropper library. */
-function CropModal({ src, onCancel, onSave }: { src: string; onCancel: () => void; onSave: (dataUrl: string) => void }) {
-  const [zoom, setZoom] = useState(1);
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-  const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
-  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const VIEWPORT = 260;
-
-  useEffect(() => {
-    const img = new Image();
-    img.onload = () => setImgSize({ w: img.width, h: img.height });
-    img.src = src;
-  }, [src]);
-
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y };
-    (e.target as Element).setPointerCapture(e.pointerId);
-  }, [pos]);
-
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragRef.current) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
-    setPos({ x: dragRef.current.origX + dx, y: dragRef.current.origY + dy });
-  }, []);
-
-  const onPointerUp = useCallback(() => { dragRef.current = null; }, []);
-
-  function reset() { setZoom(1); setPos({ x: 0, y: 0 }); }
-
-  function save() {
-    if (!imgSize.w || !imgSize.h) return;
-    const canvas = document.createElement('canvas');
-    canvas.width = OUTPUT_SIZE;
-    canvas.height = OUTPUT_SIZE;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const img = new Image();
-    img.onload = () => {
-      // Scale so the image covers the viewport square, matching the on-screen preview.
-      const baseScale = Math.max(VIEWPORT / imgSize.w, VIEWPORT / imgSize.h) * zoom;
-      const drawW = imgSize.w * baseScale;
-      const drawH = imgSize.h * baseScale;
-      const outScale = OUTPUT_SIZE / VIEWPORT;
-      const dx = (VIEWPORT / 2 + pos.x - drawW / 2) * outScale;
-      const dy = (VIEWPORT / 2 + pos.y - drawH / 2) * outScale;
-      ctx.drawImage(img, dx, dy, drawW * outScale, drawH * outScale);
-      onSave(canvas.toDataURL('image/png'));
-    };
-    img.src = src;
-  }
-
-  const baseScale = imgSize.w && imgSize.h ? Math.max(VIEWPORT / imgSize.w, VIEWPORT / imgSize.h) * zoom : 1;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
-      <div className="relative w-full max-w-sm rounded-2xl p-5" style={{ background: 'var(--glass-solid)', border: '1px solid var(--line)' }}>
-        <h3 className="font-display font-semibold text-base mb-1" style={{ color: 'var(--ink)' }}>Edit photo</h3>
-        <p className="text-xs mb-4" style={{ color: 'var(--ink-soft)' }}>Drag to reposition, use the slider to zoom.</p>
-        <div
-          ref={viewportRef}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          className="mx-auto rounded-2xl overflow-hidden relative cursor-move select-none"
-          style={{ width: VIEWPORT, height: VIEWPORT, background: 'var(--bg)', border: '1px solid var(--line)', touchAction: 'none' }}
-        >
-          {imgSize.w > 0 && (
-            <img
-              src={src}
-              alt="Crop preview"
-              draggable={false}
-              className="absolute top-1/2 left-1/2 max-w-none pointer-events-none"
-              style={{
-                width: imgSize.w * baseScale,
-                height: imgSize.h * baseScale,
-                transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`,
-              }}
-            />
-          )}
-        </div>
-        <div className="flex items-center gap-3 mt-4">
-          <ZoomIn size={15} style={{ color: 'var(--ink-soft)' }} />
-          <input
-            type="range" min={1} max={3} step={0.01} value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-            className="flex-1"
-          />
-          <button onClick={reset} aria-label="Reset crop" title="Reset" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">
-            <RotateCcw size={14} style={{ color: 'var(--ink-soft)' }} />
-          </button>
-        </div>
-        <div className="flex justify-end gap-2 mt-5">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 rounded-xl text-sm font-medium border"
-            style={{ borderColor: 'var(--line)', color: 'var(--ink)' }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={save}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-[var(--on-accent)] bg-gradient-to-r from-[var(--blue)] to-[var(--purple)]"
-          >
-            Save
-          </button>
-        </div>
       </div>
     </div>
   );

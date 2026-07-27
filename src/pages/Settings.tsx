@@ -4,7 +4,6 @@ import { Card, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
-import { ColorSchemeToggle } from '../components/ui/ColorSchemeToggle';
 import { Switch } from '../components/ui/Switch';
 import { useToastStore } from '../store/toastStore';
 import { useConfirm } from '../hooks/useConfirm';
@@ -112,14 +111,6 @@ export default function Settings() {
             <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Switch between light and dark themes.</p>
           </div>
           <ThemeToggle />
-        </div>
-        <div className="h-px my-4" style={{ background: 'var(--line)' }} />
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Theme Color</p>
-            <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Choose the app's accent color scheme.</p>
-          </div>
-          <ColorSchemeToggle />
         </div>
       </Card>
 

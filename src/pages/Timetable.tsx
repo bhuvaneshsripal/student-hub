@@ -54,7 +54,6 @@ function buildDisplayBlocks(dayClasses: ClassBlock[], merge: boolean): DisplayBl
 
 export default function Timetable() {
   const { classes, addClass, updateClass, removeClass, restoreClass, hasConflict } = useTimetableStore();
-  const colorScheme = useSettingsStore((s) => s.colorScheme);
   const slotView = useSettingsStore((s) => s.timetableSlotView);
   const setSlotView = useSettingsStore((s) => s.setTimetableSlotView);
   const push = useToastStore((s) => s.push);
@@ -162,7 +161,7 @@ export default function Timetable() {
         <div className="flex items-center gap-2 no-print">
           <Button variant="outline" size="sm" icon={<ClipboardPaste size={14} />} onClick={openImport}>Paste from MyCamu</Button>
           <Button variant="outline" size="sm" icon={<Printer size={14} />} onClick={() => window.print()}>Print</Button>
-          <Button variant="outline" size="sm" icon={<FileDown size={14} />} onClick={() => exportTimetablePdf(classes, colorScheme)}>Export PDF</Button>
+          <Button variant="outline" size="sm" icon={<FileDown size={14} />} onClick={() => exportTimetablePdf(classes)}>Export PDF</Button>
           <Button size="sm" icon={<Plus size={14} />} onClick={() => openAdd()}>Add Class</Button>
         </div>
       </div>

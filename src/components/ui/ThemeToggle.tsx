@@ -7,19 +7,12 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      aria-label="Toggle dark mode"
-      className="relative w-14 h-8 rounded-full flex items-center px-1 transition-colors border"
-      style={{
-        background: isDark ? 'linear-gradient(90deg, var(--blue), var(--purple))' : 'var(--accent-solid)',
-        borderColor: isDark ? 'transparent' : 'var(--accent-solid-border)',
-      }}
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
+      style={{ color: 'var(--ink)' }}
     >
-      <div
-        className="w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center transition-transform duration-300"
-        style={{ transform: isDark ? 'translateX(24px)' : 'translateX(0px)' }}
-      >
-        {isDark ? <Moon size={13} className="text-[var(--purple)]" /> : <Sun size={13} className="text-[var(--warning)]" />}
-      </div>
+      {isDark ? <Moon size={17} /> : <Sun size={17} />}
     </button>
   );
 }

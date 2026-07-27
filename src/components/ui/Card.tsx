@@ -15,10 +15,12 @@ export function Card({ children, className, hover = true, delay = 0, ...rest }: 
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={hover ? { y: -3 } : undefined}
+      whileHover={hover ? { y: -2 } : undefined}
       className={clsx(
-        'glass rounded-2xl p-5 transition-shadow',
-        hover && 'hover:shadow-xl',
+        // 22px corner radius + a crisp 1px border carries elevation instead
+        // of a heavy drop shadow — subtle, minimalist, "premium SaaS" feel.
+        'glass rounded-[22px] p-5 transition-colors duration-200',
+        hover && 'hover:border-[var(--accent-solid-border)]/25',
         className
       )}
       {...(rest as any)}
@@ -48,8 +50,8 @@ export function CardHeader({ title, subtitle, icon, action, color = 'blue' }: { 
       <div className="flex items-center gap-3">
         {icon && (
           <div
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 ring-1 ring-inset ring-white/25"
-            style={{ background: c.bg, boxShadow: `0 4px 14px -3px ${c.glow}` }}
+            className="badge-icon relative w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 ring-1 ring-inset ring-white/25"
+            style={{ background: c.bg, boxShadow: `0 3px 8px -3px ${c.glow}` }}
           >
             {icon}
             {/* small status-light dot for a robotic/tech feel */}

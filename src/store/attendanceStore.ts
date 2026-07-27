@@ -120,7 +120,7 @@ export const useAttendanceStore =
       (set, get) => ({
         subjects: seed,
 
-        semesterStart: "2026-06-07",
+        semesterStart: "2026-06-16",
 
         semesterEnd: "2026-09-19",
 

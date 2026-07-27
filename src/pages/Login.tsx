@@ -27,22 +27,22 @@ import { auth, db, googleProvider } from "../firebase";
 import { useNavigate } from "react-router-dom";
 
 const FEATURES = [
-  { title: "Timetable", subtitle: "Smart Management", icon: Calendar, bg: "#2563EB" },
-  { title: "CGPA", subtitle: "Smart Management", icon: GraduationCap, bg: "#6EC6FF" },
+  { title: "Timetable", subtitle: "Smart Management", icon: Calendar, bg: "var(--blue)" },
+  { title: "CGPA", subtitle: "Smart Management", icon: GraduationCap, bg: "#5C6B62" },
 ];
 
 const SIDE_FEATURES = [
-  { title: "Smart Timetable", subtitle: "Plan your day better", icon: Calendar, color: "#3B82F6" },
-  { title: "Track CGPA", subtitle: "Monitor your progress", icon: TrendingUp, color: "#10B981" },
-  { title: "Practice DSA", subtitle: "Sharpen your skills", icon: Code2, color: "#6366F1" },
-  { title: "Aptitude Tests", subtitle: "Prepare & improve", icon: Target, color: "#EC4899" },
+  { title: "Smart Timetable", subtitle: "Plan your day better", icon: Calendar, color: "var(--blue)" },
+  { title: "Track CGPA", subtitle: "Monitor your progress", icon: TrendingUp, color: "var(--blue)" },
+  { title: "Practice DSA", subtitle: "Sharpen your skills", icon: Code2, color: "var(--blue)" },
+  { title: "Aptitude Tests", subtitle: "Prepare & improve", icon: Target, color: "var(--blue)" },
 ];
 
 const STATS = [
-  { value: "50K+", label: "Active Students", icon: Users, color: "#8B5CF6" },
-  { value: "90%", label: "Stay Consistent", icon: TrendingUp, color: "#3B82F6" },
-  { value: "85%", label: "Goals Achieved", icon: Target, color: "#10B981" },
-  { value: "Top 1%", label: "Aiming Higher", icon: Trophy, color: "#EC4899" },
+  { value: "50K+", label: "Active Students", icon: Users, color: "var(--blue)" },
+  { value: "90%", label: "Stay Consistent", icon: TrendingUp, color: "var(--blue)" },
+  { value: "85%", label: "Goals Achieved", icon: Target, color: "var(--blue)" },
+  { value: "Top 1%", label: "Aiming Higher", icon: Trophy, color: "var(--blue)" },
 ];
 
 async function ensureUserDoc(user: {
@@ -143,24 +143,10 @@ export default function Login() {
         <div className="s2-wash s2-wash-b" />
         <div className="s2-dots" />
         <svg className="s2-wave s2-wave-a" viewBox="0 0 300 120" fill="none">
-          <path d="M0 60 Q 75 10 150 60 T 300 60" stroke="url(#g1)" strokeWidth="2" />
-          <defs>
-            <linearGradient id="g1" x1="0" y1="0" x2="300" y2="0">
-              <stop offset="0%" stopColor="#8B5CF6" />
-              <stop offset="50%" stopColor="#3B82F6" />
-              <stop offset="100%" stopColor="#EC4899" />
-            </linearGradient>
-          </defs>
+          <path d="M0 60 Q 75 10 150 60 T 300 60" stroke="var(--blue)" strokeWidth="2" opacity="0.5" />
         </svg>
         <svg className="s2-wave s2-wave-b" viewBox="0 0 300 120" fill="none">
-          <path d="M0 60 Q 75 110 150 60 T 300 60" stroke="url(#g2)" strokeWidth="2" />
-          <defs>
-            <linearGradient id="g2" x1="0" y1="0" x2="300" y2="0">
-              <stop offset="0%" stopColor="#FFC107" />
-              <stop offset="50%" stopColor="#3B82F6" />
-              <stop offset="100%" stopColor="#8B5CF6" />
-            </linearGradient>
-          </defs>
+          <path d="M0 60 Q 75 110 150 60 T 300 60" stroke="var(--blue)" strokeWidth="2" opacity="0.3" />
         </svg>
       </div>
 
@@ -175,14 +161,14 @@ export default function Login() {
 
           <div className="s2-widget s2-progress">
             <div className="flex items-center gap-2 mb-1">
-              <BarChart3 size={15} className="text-[#6366F1]" />
+              <BarChart3 size={15} style={{ color: 'var(--blue)' }} />
               <span className="s2-widget-label">Today's Progress</span>
             </div>
             <p className="s2-progress-value">78%</p>
             <svg viewBox="0 0 100 26" className="w-full h-6 mt-1">
               <polyline
                 points="0,20 15,17 30,19 45,10 60,13 75,5 100,3"
-                fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                fill="none" stroke="var(--blue)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
               />
             </svg>
           </div>
@@ -312,7 +298,7 @@ export default function Login() {
           <div className="s2-widget s2-sidelist">
             {SIDE_FEATURES.map(({ title, subtitle, icon: Icon, color }) => (
               <div key={title} className="s2-sidelist-row">
-                <span className="s2-sidelist-icon" style={{ color, background: `${color}1A` }}>
+                <span className="s2-sidelist-icon" style={{ color, background: 'var(--accent-solid)' }}>
                   <Icon size={17} />
                 </span>
                 <div>
@@ -367,22 +353,23 @@ export default function Login() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 8 }}
               transition={{ duration: 0.18 }}
-              className="relative w-full max-w-sm bg-white rounded-[28px] p-6 shadow-2xl"
+              className="relative w-full max-w-sm rounded-[28px] p-6 shadow-2xl"
+              style={{ background: 'var(--glass-solid)', border: '1px solid var(--line)' }}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-lg text-[#12142B]">Reset password</h3>
-                <button onClick={() => setForgotOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/5">
-                  <X size={18} className="text-[#63678C]" />
+                <h3 className="font-semibold text-lg" style={{ color: 'var(--ink)' }}>Reset password</h3>
+                <button onClick={() => setForgotOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10">
+                  <X size={18} style={{ color: 'var(--ink-soft)' }} />
                 </button>
               </div>
 
               {forgotStatus === "sent" ? (
-                <p className="text-sm text-[#63678C]">
+                <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>
                   A password reset link has been sent to <strong>{forgotEmail}</strong>. Check your inbox.
                 </p>
               ) : (
                 <>
-                  <p className="text-sm text-[#63678C] mb-4">
+                  <p className="text-sm mb-4" style={{ color: 'var(--ink-soft)' }}>
                     Enter your email and we'll send you a link to reset your password.
                   </p>
                   <div className="s2-pill mb-4">
@@ -455,18 +442,20 @@ function StudyIllustration({ className = "", flip = false }: { className?: strin
 }
 
 const loginStyles = `
-  .s2 { background: #FFF9EE; font-family: 'Inter', system-ui, sans-serif; }
+  .s2 { background: var(--login-bg); font-family: 'Inter', system-ui, sans-serif; }
 
   .s2-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-  .s2-wash { position: absolute; border-radius: 999px; filter: blur(70px); opacity: 0.5; }
-  .s2-wash-a { width: 480px; height: 480px; top: -140px; left: -120px; background: radial-gradient(circle, #FFD98A, transparent 70%); }
-  .s2-wash-b { width: 420px; height: 420px; top: -100px; right: -120px; background: radial-gradient(circle, #A78BFA, transparent 70%); opacity: 0.35; }
+  .s2-wash { position: absolute; border-radius: 999px; filter: blur(70px); opacity: 0.35; }
+  .s2-wash-a { width: 480px; height: 480px; top: -140px; left: -120px; background: radial-gradient(circle, var(--blue), transparent 70%); opacity: 0.14; }
+  .s2-wash-b { width: 420px; height: 420px; top: -100px; right: -120px; background: radial-gradient(circle, var(--blue), transparent 70%); opacity: 0.08; }
+  .dark .s2-wash-a, .dark .s2-wash-b { opacity: 0; }
   .s2-dots {
     position: absolute; left: 24px; bottom: 24px; width: 90px; height: 90px;
-    background-image: radial-gradient(rgba(139,92,246,0.35) 1.5px, transparent 1.5px);
+    background-image: radial-gradient(rgba(31,92,61,0.25) 1.5px, transparent 1.5px);
     background-size: 12px 12px;
   }
-  .s2-wave { position: absolute; width: 260px; opacity: 0.6; }
+  .dark .s2-dots { background-image: radial-gradient(rgba(255,255,255,0.18) 1.5px, transparent 1.5px); }
+  .s2-wave { position: absolute; width: 260px; }
   .s2-wave-a { left: -10px; bottom: 40px; }
   .s2-wave-b { right: -10px; bottom: 10px; transform: scaleY(-1); }
 
@@ -485,46 +474,39 @@ const loginStyles = `
     font-weight: 700;
     font-size: 30px;
     line-height: 1.2;
-    color: #1A1F3D;
+    color: var(--ink);
   }
-  .s2-eyebrow-grad {
-    background: linear-gradient(90deg, #8B5CF6, #EC4899);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .s2-sub { margin-top: 14px; font-size: 14px; line-height: 1.6; color: #6B7280; max-width: 260px; }
+  .s2-eyebrow-grad { color: var(--blue); }
+  .s2-sub { margin-top: 14px; font-size: 14px; line-height: 1.6; color: var(--ink-soft); max-width: 260px; }
 
   .s2-widget {
-    background: rgba(255,255,255,0.75);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.9);
+    background: var(--glass-solid);
+    border: 1px solid var(--line);
     border-radius: 18px;
-    box-shadow: 0 14px 34px -16px rgba(60,40,20,0.28);
+    box-shadow: var(--shadow);
     padding: 14px 16px;
   }
   .s2-progress { margin-top: 26px; width: 170px; }
-  .s2-widget-label { font-size: 11.5px; font-weight: 600; color: #4B4B57; }
-  .s2-progress-value { font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 700; color: #1A1F3D; }
+  .s2-widget-label { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); }
+  .s2-progress-value { font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 700; color: var(--ink); }
 
   .s2-illustration { width: 100%; height: auto; margin-top: 22px; opacity: 0.95; }
 
   .s2-quote {
-    background: rgba(255,255,255,0.7);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.9);
+    background: var(--glass-solid);
+    border: 1px solid var(--line);
     border-radius: 18px;
     padding: 16px 18px;
     font-style: italic;
-    color: #1A1F3D;
+    color: var(--ink);
     font-size: 13.5px;
     line-height: 1.5;
-    box-shadow: 0 14px 34px -16px rgba(60,40,20,0.22);
+    box-shadow: var(--shadow);
   }
   .s2-quote-mark {
     font-family: Georgia, serif;
     font-size: 30px;
-    color: #8B5CF6;
+    color: var(--blue);
     line-height: 0;
     display: inline-block;
     margin-bottom: 6px;
@@ -537,82 +519,71 @@ const loginStyles = `
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .s2-sidelist-title { font-size: 12.5px; font-weight: 700; color: #1A1F3D; }
-  .s2-sidelist-sub { font-size: 10.5px; color: #8A8F98; }
+  .s2-sidelist-title { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+  .s2-sidelist-sub { font-size: 10.5px; color: var(--ink-soft); }
 
   /* ---- Center card ---- */
   .s2-card {
     position: relative;
     z-index: 2;
-    background: rgba(255,255,255,0.92);
+    background: var(--glass-solid);
+    border: 1px solid var(--line);
     border-radius: 26px;
     padding: 26px 20px;
-    box-shadow: 0 30px 70px -24px rgba(60,40,20,0.28);
+    box-shadow: var(--shadow);
   }
   @media (min-width: 640px) {
     .s2-card { border-radius: 32px; padding: 34px 30px; }
   }
-  @media (min-width: 1024px) {
-    .s2-card {
-      background: rgba(255,255,255,0.82);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.9);
-    }
-  }
 
   .s2-pill {
     display: flex; align-items: center; gap: 12px;
-    background: #FFFFFF;
-    border: 1.5px solid #ECEBE6;
+    background: var(--bg);
+    border: 1.5px solid var(--line);
     border-radius: 999px;
     padding: 13px 20px;
-    box-shadow: 0 2px 8px rgba(20,20,20,0.04);
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: border-color 0.2s ease;
   }
-  .s2-pill:hover { box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
-  .s2-pill:focus-within { border-color: #6366F1; box-shadow: 0 0 0 4px rgba(99,102,241,0.14); }
-  .s2-pill-icon { color: #9AA0A8; flex-shrink: 0; }
+  .s2-pill:focus-within { border-color: var(--blue); }
+  .s2-pill-icon { color: var(--ink-soft); flex-shrink: 0; }
   .s2-pill-input {
     flex: 1; min-width: 0; background: transparent; border: none; outline: none;
-    font-size: 15px; font-weight: 500; color: #1B1B1E;
+    font-size: 15px; font-weight: 500; color: var(--ink);
   }
-  .s2-pill-input::placeholder { color: #ADB2B8; font-weight: 500; }
+  .s2-pill-input::placeholder { color: var(--ink-soft); font-weight: 500; }
 
-  .s2-forgot { font-size: 12.5px; font-weight: 600; color: #4F46E5; }
+  .s2-forgot { font-size: 12.5px; font-weight: 600; color: var(--blue); }
   .s2-forgot:hover { text-decoration: underline; }
 
   .s2-login-btn {
     width: 100%; margin-top: 2px; padding: 14px 0;
     border-radius: 999px;
-    background: #FFFFFF;
-    border: 1.5px solid #EEEDE8;
-    color: #14141A;
+    background: var(--blue);
+    border: none;
+    color: var(--on-accent);
     font-weight: 700; font-size: 16px;
-    box-shadow: 0 6px 18px rgba(20,20,20,0.08);
-    transition: box-shadow 0.25s ease, transform 0.15s ease;
+    box-shadow: var(--glow-shadow);
+    transition: filter 0.2s ease, transform 0.15s ease;
   }
-  .s2-login-btn:hover { box-shadow: 0 0 0 5px rgba(99,102,241,0.12), 0 10px 24px rgba(20,20,20,0.1); transform: translateY(-1px); }
+  .s2-login-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
   .s2-login-btn:active { transform: translateY(0); }
   .s2-login-btn:disabled { opacity: 0.6; }
 
   .s2-divider {
     display: flex; align-items: center; gap: 12px;
     margin: 18px 0 4px;
-    font-size: 12px; color: #9AA0A8;
+    font-size: 12px; color: var(--ink-soft);
   }
-  .s2-divider span { flex: 1; height: 1px; background: #ECEBE6; }
+  .s2-divider span { flex: 1; height: 1px; background: var(--line); }
 
   .s2-google-wrap {
-    position: relative;
     border-radius: 999px;
-    padding: 2px;
-    background: conic-gradient(from 0deg, #4F8CFF, #43E8E0, #9B5CFF, #FF5CAD, #4F8CFF);
-    box-shadow: 0 0 18px 1px rgba(79,140,255,0.3), 0 0 26px 4px rgba(155,92,255,0.2);
+    border: 1.5px solid var(--line);
   }
   .s2-google-btn {
     width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
     padding: 12px 0; border-radius: 999px;
-    background: #FFFFFF; color: #1B1B1E;
+    background: var(--bg); color: var(--ink);
     font-size: 15px; font-weight: 600;
   }
   .s2-google-btn:disabled { opacity: 0.6; }
@@ -620,27 +591,25 @@ const loginStyles = `
   .s2-feature {
     border-radius: 20px;
     padding: 14px;
-    box-shadow: 0 10px 24px -12px rgba(20,20,20,0.22);
-    color: #14141A;
+    color: var(--on-accent);
   }
   .s2-feature-icon {
     width: 30px; height: 30px; border-radius: 9px;
-    background: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.25);
     display: flex; align-items: center; justify-content: center;
   }
   .s2-feature-title { font-weight: 700; font-size: 14.5px; line-height: 1.2; }
-  .s2-feature-sub { font-size: 10.5px; opacity: 0.75; margin-top: 1px; }
+  .s2-feature-sub { font-size: 10.5px; opacity: 0.85; margin-top: 1px; }
 
   /* ---- Stats row (tablet & desktop) ---- */
   .s2-stats {
     position: relative;
     z-index: 1;
     width: min(880px, 100%);
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(255,255,255,0.9);
+    background: var(--glass-solid);
+    border: 1px solid var(--line);
     border-radius: 999px;
-    box-shadow: 0 16px 36px -18px rgba(60,40,20,0.3);
+    box-shadow: var(--shadow);
     padding: 16px 10px;
     flex-wrap: wrap;
   }
@@ -649,12 +618,12 @@ const loginStyles = `
     min-width: 110px;
     display: flex; align-items: center; gap: 10px;
     justify-content: center;
-    border-left: 1px solid #EDEBE4;
+    border-left: 1px solid var(--line);
   }
   .s2-stat:first-child { border-left: none; }
   .s2-stat-icon { display: flex; }
-  .s2-stat-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px; color: #1A1F3D; line-height: 1.1; }
-  .s2-stat-label { font-size: 10.5px; color: #8A8F98; }
+  .s2-stat-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px; color: var(--ink); line-height: 1.1; }
+  .s2-stat-label { font-size: 10.5px; color: var(--ink-soft); }
 
   /* ---- Compact stats row (mobile only) ---- */
   .s2-stats-mobile {
@@ -662,11 +631,10 @@ const loginStyles = `
     z-index: 1;
     width: 100%;
     max-width: 24rem;
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(255,255,255,0.9);
+    background: var(--glass-solid);
+    border: 1px solid var(--line);
     border-radius: 22px;
-    box-shadow: 0 16px 36px -18px rgba(60,40,20,0.3);
+    box-shadow: var(--shadow);
     padding: 12px 6px;
     flex-wrap: wrap;
   }
@@ -676,8 +644,8 @@ const loginStyles = `
     text-align: center;
     padding: 6px 4px;
   }
-  .s2-stat-mobile-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; line-height: 1.1; }
-  .s2-stat-mobile-label { font-size: 10px; color: #8A8F98; margin-top: 2px; }
+  .s2-stat-mobile-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; line-height: 1.1; color: var(--ink); }
+  .s2-stat-mobile-label { font-size: 10px; color: var(--ink-soft); margin-top: 2px; }
 
   @media (prefers-reduced-motion: reduce) {
     .s2-card, .s2-widget { transition: none !important; }

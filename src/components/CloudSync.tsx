@@ -48,6 +48,13 @@ export function CloudSync() {
       if (cloudProfile) {
         updateProfile(cloudProfile);
       }
+      // Profile picture is always taken from the signed-in account (Google
+      // account photo, etc.) rather than a manually uploaded one — keeps it
+      // in sync automatically and overrides anything stored in Firestore/
+      // localStorage, so a changed Google photo shows up here too.
+      if (user.photoURL) {
+        updateProfile({ avatar: user.photoURL });
+      }
       // If there's no cloud profile yet, we simply leave the (now blank,
       // or already-correct) local profile as-is. It gets saved to the
       // cloud once the user actually fills in their own details, via

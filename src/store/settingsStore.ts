@@ -2,8 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Profile } from '../types';
 
-export type ColorScheme = 'blue' | 'yellow';
-
 const defaultProfile: Profile = {
   name: '',
   registerNumber: '',
@@ -16,8 +14,6 @@ const defaultProfile: Profile = {
 interface SettingsState {
   theme: 'light' | 'dark';
   toggleTheme: () => void;
-  colorScheme: ColorScheme;
-  setColorScheme: (scheme: ColorScheme) => void;
   profile: Profile;
   updateProfile: (p: Partial<Profile>) => void;
   /** Resets the profile back to blank defaults. Used when a different
@@ -47,6 +43,9 @@ interface SettingsState {
    * single combined block (e.g. 8–9 and 9–10 of the same class become 8–10). */
   timetableSlotView: '1h' | '2h';
   setTimetableSlotView: (v: '1h' | '2h') => void;
+  /** Desktop sidebar collapsed (icon-only) vs expanded (icon + label). */
+  sidebarCollapsed: boolean;
+  toggleSidebarCollapsed: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -54,8 +53,6 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       theme: 'light',
       toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
-      colorScheme: 'blue',
-      setColorScheme: (scheme) => set({ colorScheme: scheme }),
       profile: defaultProfile,
       updateProfile: (p) => set((s) => ({ profile: { ...s.profile, ...p } })),
       resetProfile: () => set({ profile: defaultProfile }),
@@ -72,6 +69,8 @@ export const useSettingsStore = create<SettingsState>()(
       toggleSystemNotifications: () => set((s) => ({ systemNotifications: !s.systemNotifications })),
       timetableSlotView: '1h',
       setTimetableSlotView: (v) => set({ timetableSlotView: v }),
+      sidebarCollapsed: false,
+      toggleSidebarCollapsed: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
     }),
     { name: 'studenthub-settings' }
   )

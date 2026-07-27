@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Bell, Menu, Bot, LogOut } from "lucide-react";
+import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 
@@ -21,8 +22,14 @@ export function Topbar({
   const navigate = useNavigate();
 
   const [notifOpen, setNotifOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [searchActive, setSearchActive] = useState(false);
+  // Google's profile photo URL occasionally fails to load (ad/tracker
+  // blockers, expired token, offline, etc). When it does, fall back to
+  // initials/Bot instead of leaving a broken-image icon in the header.
+  const [avatarBroken, setAvatarBroken] = useState(false);
 
   const profile = useSettingsStore((s) => s.profile);
   const notificationSound = useSettingsStore((s) => s.notificationSound);
@@ -43,7 +50,11 @@ export function Topbar({
   };
 
   useEffect(() => {
-    if (!notifOpen) return;
+    setAvatarBroken(false);
+  }, [profile.avatar]);
+
+  useEffect(() => {
+    if (!notifOpen && !profileMenuOpen) return;
 
     function onOutside(e: MouseEvent | TouchEvent) {
       if (
@@ -51,6 +62,7 @@ export function Topbar({
         !wrapRef.current.contains(e.target as Node)
       ) {
         setNotifOpen(false);
+        setProfileMenuOpen(false);
       }
     }
 
@@ -61,7 +73,7 @@ export function Topbar({
       document.removeEventListener("mousedown", onOutside);
       document.removeEventListener("touchstart", onOutside);
     };
-  }, [notifOpen]);
+  }, [notifOpen, profileMenuOpen]);
 
   return (
     <header
@@ -73,18 +85,18 @@ export function Topbar({
     >
       <button
         onClick={onMenuClick}
-        className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg"
+        className={`md:hidden w-9 h-9 items-center justify-center rounded-lg ${searchActive ? "hidden" : "flex"}`}
       >
         <Menu size={20} style={{ color: "var(--ink)" }} />
       </button>
 
       <div className="flex-1 flex justify-center md:justify-start">
-        <GlobalSearch />
+        <GlobalSearch onExpandedChange={setSearchActive} />
       </div>
 
       <div
         ref={wrapRef}
-        className="flex items-center gap-3 relative"
+        className={`items-center gap-3 relative ${searchActive ? "hidden md:flex" : "flex"}`}
       >
         <ThemeToggle />
 
@@ -107,35 +119,90 @@ export function Topbar({
           />
         )}
 
-        <Link
-          to="/profile"
-          className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[var(--on-accent)] overflow-hidden"
-        >
-          {profile.avatar ? (
-            <img
-              src={profile.avatar}
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
-          ) : profile.name.trim() ? (
-            profile.name
-              .trim()
-              .split(" ")
-              .map((n) => n[0])
-              .slice(0, 2)
-              .join("")
-          ) : (
-            <Bot size={18} />
-          )}
-        </Link>
+        <div className="relative">
+          <button
+            onClick={() => setProfileMenuOpen((v) => !v)}
+            className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
+          >
+            <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[var(--on-accent)] overflow-hidden shrink-0">
+              {profile.avatar && !avatarBroken ? (
+                <img
+                  src={profile.avatar}
+                  alt="Profile"
+                  referrerPolicy="no-referrer"
+                  onError={() => setAvatarBroken(true)}
+                  className="w-full h-full object-cover"
+                />
+              ) : profile.name.trim() ? (
+                profile.name
+                  .trim()
+                  .split(" ")
+                  .map((n) => n[0])
+                  .slice(0, 2)
+                  .join("")
+              ) : (
+                <Bot size={18} />
+              )}
+            </span>
+            <span className="hidden sm:block text-sm font-medium max-w-[9rem] truncate" style={{ color: "var(--ink)" }}>
+              {profile.name.trim() || "Student"}
+            </span>
+          </button>
 
-        <button
-          onClick={() => setConfirmLogoutOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition"
-        >
-          <LogOut size={16} />
-          Logout
-        </button>
+          {profileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              className="absolute right-0 top-12 w-64 rounded-[20px] p-2 z-50"
+              style={{ background: "var(--glass-solid)", border: "1px solid var(--line)", boxShadow: "var(--shadow)" }}
+            >
+              <Link
+                to="/profile"
+                onClick={() => setProfileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
+              >
+                <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--blue)] to-[var(--purple)] flex items-center justify-center text-[var(--on-accent)] overflow-hidden shrink-0">
+                  {profile.avatar && !avatarBroken ? (
+                    <img
+                      src={profile.avatar}
+                      alt="Profile"
+                      referrerPolicy="no-referrer"
+                      onError={() => setAvatarBroken(true)}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : profile.name.trim() ? (
+                    profile.name.trim().split(" ").map((n) => n[0]).slice(0, 2).join("")
+                  ) : (
+                    <Bot size={18} />
+                  )}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold truncate" style={{ color: "var(--ink)" }}>
+                    {profile.name.trim() || "Add your name"}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: "var(--ink-soft)" }}>
+                    {auth.currentUser?.email ?? "Not signed in"}
+                  </p>
+                </div>
+              </Link>
+
+              <div className="my-1.5 border-t" style={{ borderColor: "var(--line)" }} />
+
+              <button
+                onClick={() => {
+                  setProfileMenuOpen(false);
+                  setConfirmLogoutOpen(true);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
+                style={{ color: "#F04438" }}
+              >
+                <LogOut size={16} />
+                Logout
+              </button>
+            </motion.div>
+          )}
+        </div>
       </div>
 
       <Modal

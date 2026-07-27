@@ -4,7 +4,6 @@ import { Card, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { useCgpaStore, semesterGPA, overallCGPA } from '../store/cgpaStore';
-import { useSettingsStore } from '../store/settingsStore';
 import { useToastStore } from '../store/toastStore';
 import { useConfirm } from '../hooks/useConfirm';
 import { GRADE_POINTS, type Grade } from '../types';
@@ -15,7 +14,6 @@ const GRADES: Grade[] = ['S', 'A+', 'A', 'B+', 'B', 'C+', 'C', 'U', 'SA', 'WC'];
 
 export default function CGPA() {
   const { semesters, addSemester, removeSemester, restoreSemester, addSubject, updateSubject, removeSubject, restoreSubject, importSubjects } = useCgpaStore();
-  const colorScheme = useSettingsStore((s) => s.colorScheme);
   const push = useToastStore((s) => s.push);
   const { confirm, dialog } = useConfirm();
   const [newSemName, setNewSemName] = useState('');
@@ -96,7 +94,7 @@ export default function CGPA() {
           <p className="text-sm mt-1" style={{ color: 'var(--ink-soft)' }}>Track semester GPA and overall CGPA across unlimited semesters.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" icon={<FileDown size={14} />} onClick={() => exportCgpaPdf(semesters, colorScheme)}>Export PDF Report</Button>
+          <Button variant="outline" size="sm" icon={<FileDown size={14} />} onClick={() => exportCgpaPdf(semesters)}>Export PDF Report</Button>
           <Button
             variant="outline" size="sm"
             icon={ocrLoading ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}

@@ -21,6 +21,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
+  signOut,
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase";
@@ -78,6 +80,10 @@ export default function Login() {
   // typed email/password don't match an existing user (that let literally
   // any made-up email "log in" by registering it on the spot).
   const [mode, setMode] = useState<"login" | "signup">("login");
+  // Set when the most recent attempt hit an unverified-but-real account,
+  // so we can show a "Resend verification email" action for it.
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
+  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent">("idle");
 
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -90,12 +96,21 @@ export default function Login() {
       return;
     }
     setError("");
+    setUnverifiedEmail("");
+    setResendStatus("idle");
     setLoading(true);
     try {
       if (mode === "signup") {
         try {
           const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
-          await ensureUserDoc(result.user);
+          // A password alone doesn't prove this is a real, owned mailbox —
+          // send a verification link and keep them signed out until they
+          // click it, so a made-up address can't be used to get in.
+          await sendEmailVerification(result.user);
+          await signOut(auth);
+          setMode("login");
+          setPassword("");
+          setError("We've sent a verification link to your email. Verify it, then log in here.");
         } catch (err: any) {
           if (err?.code === "auth/email-already-in-use") {
             // Account already exists — don't silently sign them in under
@@ -111,14 +126,39 @@ export default function Login() {
         // or an email nobody registered both surface as a normal error —
         // it never falls back to creating a new account.
         const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+        if (!result.user.emailVerified) {
+          // The account exists but nobody has proven they own this inbox
+          // yet — don't let them into the dashboard on password alone.
+          await signOut(auth);
+          setUnverifiedEmail(email.trim());
+          setError("Please verify your email before logging in — check your inbox for the link.");
+          return;
+        }
         await ensureUserDoc(result.user);
+        navigate("/");
       }
-      navigate("/");
     } catch (err: any) {
       console.error(err);
       setError(friendlyAuthError(err?.code));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResendVerification() {
+    if (!unverifiedEmail || !password) return;
+    setResendStatus("sending");
+    try {
+      // Firebase only lets you send a verification email to a signed-in
+      // user, so we briefly sign back in, send it, then sign out again.
+      const result = await signInWithEmailAndPassword(auth, unverifiedEmail, password);
+      await sendEmailVerification(result.user);
+      await signOut(auth);
+      setResendStatus("sent");
+    } catch (err) {
+      console.error(err);
+      setResendStatus("idle");
+      setError("Couldn't resend the verification email. Try logging in again.");
     }
   }
 
@@ -248,6 +288,21 @@ export default function Login() {
 
           {error && <p className="text-xs text-red-500 pt-1">{error}</p>}
 
+          {unverifiedEmail && (
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={resendStatus === "sending" || resendStatus === "sent"}
+              className="s2-forgot block"
+            >
+              {resendStatus === "sent"
+                ? "Verification email sent — check your inbox"
+                : resendStatus === "sending"
+                ? "Sending..."
+                : "Resend verification email"}
+            </button>
+          )}
+
           <div className="flex justify-end pt-0.5 pb-0.5">
             <button
               type="button"
@@ -271,6 +326,8 @@ export default function Login() {
             onClick={() => {
               setMode((m) => (m === "login" ? "signup" : "login"));
               setError("");
+              setUnverifiedEmail("");
+              setResendStatus("idle");
             }}
             className="s2-forgot mx-auto block pt-1"
           >

@@ -233,7 +233,7 @@ export default function Timetable() {
                         <div className="min-w-0">
                           <p className="text-sm font-semibold truncate" style={{ color: 'var(--ink)' }}>{b.subject}</p>
                           <p className="text-xs truncate" style={{ color: 'var(--ink-soft)' }}>{b.faculty}</p>
-                          <p className="text-xs font-mono" style={{ color: 'var(--ink-soft)' }}>{b.start}–{b.end} • {b.room}</p>
+                          <p className="text-xs font-mono truncate" style={{ color: 'var(--ink-soft)' }}>{b.start}–{b.end} • {b.room}</p>
                         </div>
                         <div className="flex flex-col gap-1 shrink-0 no-print">
                           {!isMerged && (

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useAuthUser } from '../hooks/useAuthUser';
 import { useSettingsStore } from '../store/settingsStore';
-import { fetchProfileFromCloud, saveProfileToCloud } from '../lib/profileSync';
+import { fetchProfileFromCloud, saveProfileToCloud, deriveNameFromEmail } from '../lib/profileSync';
 
 /**
  * Renders nothing — just keeps the local profile store and the user's
@@ -48,11 +48,20 @@ export function CloudSync() {
       if (cloudProfile) {
         updateProfile(cloudProfile);
       }
-      // Profile picture is always taken from the signed-in account (Google
-      // account photo, etc.) rather than a manually uploaded one — keeps it
-      // in sync automatically and overrides anything stored in Firestore/
-      // localStorage, so a changed Google photo shows up here too.
-      if (user.photoURL) {
+      // Auto-fill the name from the signed-in account the first time only —
+      // once someone has a name saved (even an auto-filled one) we never
+      // overwrite it again, so a manual rename in Profile always sticks.
+      if (!cloudProfile?.name?.trim()) {
+        const autoName = user.displayName?.trim() || deriveNameFromEmail(user.email);
+        if (autoName) updateProfile({ name: autoName });
+      }
+      // Profile picture is taken from the signed-in account (Google account
+      // photo, etc.) and kept in sync automatically — UNLESS the person has
+      // uploaded their own picture in Profile (cropped/rotated via the
+      // avatar editor), in which case that custom picture always wins and
+      // is never silently replaced by the provider photo.
+      const customAvatar = cloudProfile?.avatarIsCustom || useSettingsStore.getState().profile.avatarIsCustom;
+      if (user.photoURL && !customAvatar) {
         updateProfile({ avatar: user.photoURL });
       }
       // If there's no cloud profile yet, we simply leave the (now blank,

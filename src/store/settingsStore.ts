@@ -9,6 +9,7 @@ const defaultProfile: Profile = {
   year: '',
   semester: '',
   avatar: '',
+  avatarIsCustom: false,
 };
 
 interface SettingsState {
@@ -46,6 +47,19 @@ interface SettingsState {
   /** Desktop sidebar collapsed (icon-only) vs expanded (icon + label). */
   sidebarCollapsed: boolean;
   toggleSidebarCollapsed: () => void;
+  /** Font Size: scales root font-size, which scales text and rem-based
+   * spacing app-wide. Separate from Screen Size below. */
+  fontScale: number;
+  setFontScale: (n: number) => void;
+  increaseFontScale: () => void;
+  decreaseFontScale: () => void;
+  /** Screen Size: an overall page zoom (like a browser's own zoom), applied
+   * via the CSS `zoom` property — a distinct mechanism from Font Size, so
+   * the two can be adjusted independently. */
+  screenScale: number;
+  setScreenScale: (n: number) => void;
+  increaseScreenScale: () => void;
+  decreaseScreenScale: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -71,6 +85,14 @@ export const useSettingsStore = create<SettingsState>()(
       setTimetableSlotView: (v) => set({ timetableSlotView: v }),
       sidebarCollapsed: false,
       toggleSidebarCollapsed: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+      fontScale: 100,
+      setFontScale: (n) => set({ fontScale: Math.min(130, Math.max(85, n)) }),
+      increaseFontScale: () => set((s) => ({ fontScale: Math.min(130, s.fontScale + 10) })),
+      decreaseFontScale: () => set((s) => ({ fontScale: Math.max(85, s.fontScale - 10) })),
+      screenScale: 100,
+      setScreenScale: (n) => set({ screenScale: Math.min(120, Math.max(80, n)) }),
+      increaseScreenScale: () => set((s) => ({ screenScale: Math.min(120, s.screenScale + 10) })),
+      decreaseScreenScale: () => set((s) => ({ screenScale: Math.max(80, s.screenScale - 10) })),
     }),
     { name: 'studenthub-settings' }
   )

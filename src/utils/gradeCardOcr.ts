@@ -1,4 +1,3 @@
-import Tesseract from 'tesseract.js';
 import type { Grade } from '../types';
 import { GRADE_POINTS } from '../types';
 
@@ -18,7 +17,7 @@ const GRADE_TOKEN = 'S|A\\+|A|B\\+|B|C\\+|C|U|RA|SA|WC|F|P';
 // digits). A real grade-card row often has *two* of these in front of the
 // course name (semester tag, then course code), so this is applied in a
 // loop by cleanName rather than once.
-const LEADING_LABEL = /^(?:(?:ODD|EVEN)[\s-]*(?:JUNIOR|SENIOR)?[\s:.\-]*|SEMESTER\s*[:.\-]?\s*|\d+[.)]\s*|[A-Za-z]{2,4}\d{3,5}[\s:.\-]*)/i;
+const LEADING_LABEL = /^(?:(?:ODD|EVEN)[\s-]*(?:JUNIOR|SENIOR)?[\s:.-]*|SEMESTER\s*[:.-]?\s*|\d+[.)]\s*|[A-Za-z]{2,4}\d{3,5}[\s:.-]*)/i;
 const RESULT_WORDS = /\b(Pass|Fail|Absent|Withheld)\b/gi;
 
 function cleanName(raw: string): string {
@@ -179,6 +178,10 @@ export async function extractSubjectsFromImage(
   file: File | Blob | HTMLCanvasElement,
   onProgress?: (pct: number) => void
 ): Promise<ParsedSubject[]> {
+  // Loaded on demand — this is a ~1MB+ dependency (engine + wasm) that
+  // should only ever hit the network when someone actually scans a grade
+  // card, not just for visiting the CGPA page.
+  const { default: Tesseract } = await import('tesseract.js');
   const { data } = await Tesseract.recognize(file, 'eng', {
     logger: (m) => {
       if (m.status === 'recognizing text' && typeof m.progress === 'number') {
@@ -197,11 +200,14 @@ export async function extractSubjectsFromPdf(
   file: File,
   onProgress?: (pct: number) => void
 ): Promise<ParsedSubject[]> {
-  const pdfjsLib = await import('pdfjs-dist');
-  // Vite's client types declare "*?url" modules, so this resolves to a
-  // worker script URL without a separate static-asset copy step.
-  const workerSrc = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
-  pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+  const [{ default: Tesseract }, pdfjsLib, workerSrcModule] = await Promise.all([
+    import('tesseract.js'),
+    import('pdfjs-dist'),
+    // Vite's client types declare "*?url" modules, so this resolves to a
+    // worker script URL without a separate static-asset copy step.
+    import('pdfjs-dist/build/pdf.worker.min.mjs?url'),
+  ]);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrcModule.default;
 
   const buffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;

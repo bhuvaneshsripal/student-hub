@@ -110,4 +110,9 @@ export interface Profile {
   year: string;
   semester: string;
   avatar: string; // data URL or emoji fallback
+  /** True once the person has uploaded/cropped their own picture in
+   * Profile. Once set, CloudSync stops overwriting `avatar` with the
+   * signed-in account's provider photo (e.g. Google), so a custom photo
+   * always sticks instead of being silently replaced on the next login. */
+  avatarIsCustom?: boolean;
 }

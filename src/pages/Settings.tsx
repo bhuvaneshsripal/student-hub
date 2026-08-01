@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Download, Upload, Trash2, Moon, Eye, BellRing, BellOff } from 'lucide-react';
+import { Download, Upload, Trash2, Moon, Eye, BellRing, BellOff, Minus, Plus, RotateCcw } from 'lucide-react';
 import { Card, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -36,6 +36,14 @@ export default function Settings() {
   const toggleClassReminders = useSettingsStore((s) => s.toggleClassReminders);
   const systemNotifications = useSettingsStore((s) => s.systemNotifications);
   const toggleSystemNotifications = useSettingsStore((s) => s.toggleSystemNotifications);
+  const fontScale = useSettingsStore((s) => s.fontScale);
+  const increaseFontScale = useSettingsStore((s) => s.increaseFontScale);
+  const decreaseFontScale = useSettingsStore((s) => s.decreaseFontScale);
+  const setFontScale = useSettingsStore((s) => s.setFontScale);
+  const screenScale = useSettingsStore((s) => s.screenScale);
+  const increaseScreenScale = useSettingsStore((s) => s.increaseScreenScale);
+  const decreaseScreenScale = useSettingsStore((s) => s.decreaseScreenScale);
+  const setScreenScale = useSettingsStore((s) => s.setScreenScale);
 
   function openExportPreview() {
     setPreviewMode('export');
@@ -111,6 +119,22 @@ export default function Settings() {
             <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Switch between light and dark themes.</p>
           </div>
           <ThemeToggle />
+        </div>
+        <div className="h-px my-4" style={{ background: 'var(--line)' }} />
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Font Size</p>
+            <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Make text throughout the app bigger or smaller.</p>
+          </div>
+          <SizeStepper value={fontScale} min={85} max={130} onDecrease={decreaseFontScale} onIncrease={increaseFontScale} onReset={() => setFontScale(100)} />
+        </div>
+        <div className="h-px my-4" style={{ background: 'var(--line)' }} />
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Screen Size</p>
+            <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Zoom the whole app in or out, like a browser zoom.</p>
+          </div>
+          <SizeStepper value={screenScale} min={80} max={120} onDecrease={decreaseScreenScale} onIncrease={increaseScreenScale} onReset={() => setScreenScale(100)} />
         </div>
       </Card>
 
@@ -213,6 +237,49 @@ export default function Settings() {
       </Card>
 
       {dialog}
+    </div>
+  );
+}
+
+/** Shared -/percentage/+ control used by both the Font Size and Screen Size
+ * rows above. The two rows pass in independent state/actions, so adjusting
+ * one never affects the other. */
+function SizeStepper({
+  value, min, max, onDecrease, onIncrease, onReset,
+}: {
+  value: number; min: number; max: number;
+  onDecrease: () => void; onIncrease: () => void; onReset: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: 'var(--line)' }}>
+      <button
+        onClick={onDecrease}
+        disabled={value <= min}
+        aria-label="Decrease size"
+        title="Decrease size"
+        className="w-8 h-8 rounded-md flex items-center justify-center disabled:opacity-40 hover:bg-black/[0.06] dark:hover:bg-white/[0.1]"
+      >
+        <Minus size={14} style={{ color: 'var(--ink)' }} />
+      </button>
+      <button
+        onClick={onReset}
+        aria-label="Reset size"
+        title="Reset to default"
+        className="min-w-[48px] h-8 px-2 rounded-md flex items-center justify-center gap-1 text-xs font-semibold hover:bg-black/[0.06] dark:hover:bg-white/[0.1]"
+        style={{ color: 'var(--ink)' }}
+      >
+        {value === 100 ? <RotateCcw size={12} /> : null}
+        {value}%
+      </button>
+      <button
+        onClick={onIncrease}
+        disabled={value >= max}
+        aria-label="Increase size"
+        title="Increase size"
+        className="w-8 h-8 rounded-md flex items-center justify-center disabled:opacity-40 hover:bg-black/[0.06] dark:hover:bg-white/[0.1]"
+      >
+        <Plus size={14} style={{ color: 'var(--ink)' }} />
+      </button>
     </div>
   );
 }

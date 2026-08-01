@@ -75,7 +75,7 @@ export const useTimetableStore = create<TimetableState>((set, get) => ({
 
   clearAttendanceLogs: async () => {
     const classes = get().classes.map((x) => {
-      const { attendanceLog, ...rest } = x;
+      const { attendanceLog: _attendanceLog, ...rest } = x;
       return rest as ClassBlock;
     });
 

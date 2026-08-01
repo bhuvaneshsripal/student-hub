@@ -21,8 +21,6 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
-  sendEmailVerification,
-  signOut,
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase";
@@ -46,6 +44,45 @@ const STATS = [
   { value: "85%", label: "Goals Achieved", icon: Target, color: "var(--blue)" },
   { value: "Top 1%", label: "Aiming Higher", icon: Trophy, color: "var(--blue)" },
 ];
+
+// A short list of common disposable/throwaway email providers. This is a
+// denylist, not a proof of ownership — it just stops the most obvious
+// "type garbage, get in" domains from passing the MX check below, which
+// on its own would happily accept any address on a domain that receives
+// mail (including someone else's real Gmail).
+const DISPOSABLE_DOMAINS = new Set([
+  "mailinator.com", "tempmail.com", "temp-mail.org", "10minutemail.com",
+  "guerrillamail.com", "yopmail.com", "throwawaymail.com", "trashmail.com",
+  "getnada.com", "dispostable.com", "fakeinbox.com", "sharklasers.com",
+]);
+
+// Confirms the email's domain can actually receive mail, by asking Google's
+// public DNS-over-HTTPS resolver for MX records. This is the closest check
+// possible without requiring the person to click a link or enter a code —
+// it filters out typos and made-up domains, but it CANNOT confirm the
+// specific person typing the address owns that mailbox.
+async function hasValidMailDomain(email: string): Promise<boolean> {
+  const domain = email.split("@")[1]?.toLowerCase().trim();
+  if (!domain) return false;
+  if (DISPOSABLE_DOMAINS.has(domain)) return false;
+
+  try {
+    const res = await fetch(
+      `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=MX`
+    );
+    const data = await res.json();
+    // Status 0 = NOERROR. A domain with no MX records at all can't receive
+    // mail, so treat that as invalid. Some domains rely on an A record as
+    // an implicit mail target (rare in practice) — status 0 with an empty
+    // Answer for MX is still treated as invalid here to keep the check strict.
+    return data?.Status === 0 && Array.isArray(data?.Answer) && data.Answer.length > 0;
+  } catch (err) {
+    // If the DNS check itself fails (offline, resolver down), don't block
+    // signup entirely on an infrastructure hiccup — fail open.
+    console.error("MX lookup failed", err);
+    return true;
+  }
+}
 
 async function ensureUserDoc(user: {
   uid: string;
@@ -80,10 +117,9 @@ export default function Login() {
   // typed email/password don't match an existing user (that let literally
   // any made-up email "log in" by registering it on the spot).
   const [mode, setMode] = useState<"login" | "signup">("login");
-  // Set when the most recent attempt hit an unverified-but-real account,
-  // so we can show a "Resend verification email" action for it.
-  const [unverifiedEmail, setUnverifiedEmail] = useState("");
-  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent">("idle");
+  // True while we're checking the signup email's domain against DNS —
+  // used to show a distinct "Checking email..." label on the submit button.
+  const [checkingDomain, setCheckingDomain] = useState(false);
 
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -96,21 +132,24 @@ export default function Login() {
       return;
     }
     setError("");
-    setUnverifiedEmail("");
-    setResendStatus("idle");
     setLoading(true);
     try {
       if (mode === "signup") {
+        // No click-a-link step — but we still don't want to accept a
+        // domain that can't receive mail at all (typos, made-up domains).
+        // This can't confirm the person owns this exact mailbox, only that
+        // the domain is real.
+        setCheckingDomain(true);
+        const domainOk = await hasValidMailDomain(email.trim());
+        setCheckingDomain(false);
+        if (!domainOk) {
+          setError("That email domain doesn't look like it can receive mail. Check for typos.");
+          return;
+        }
         try {
           const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
-          // A password alone doesn't prove this is a real, owned mailbox —
-          // send a verification link and keep them signed out until they
-          // click it, so a made-up address can't be used to get in.
-          await sendEmailVerification(result.user);
-          await signOut(auth);
-          setMode("login");
-          setPassword("");
-          setError("We've sent a verification link to your email. Verify it, then log in here.");
+          await ensureUserDoc(result.user);
+          navigate("/");
         } catch (err: any) {
           if (err?.code === "auth/email-already-in-use") {
             // Account already exists — don't silently sign them in under
@@ -126,14 +165,6 @@ export default function Login() {
         // or an email nobody registered both surface as a normal error —
         // it never falls back to creating a new account.
         const result = await signInWithEmailAndPassword(auth, email.trim(), password);
-        if (!result.user.emailVerified) {
-          // The account exists but nobody has proven they own this inbox
-          // yet — don't let them into the dashboard on password alone.
-          await signOut(auth);
-          setUnverifiedEmail(email.trim());
-          setError("Please verify your email before logging in — check your inbox for the link.");
-          return;
-        }
         await ensureUserDoc(result.user);
         navigate("/");
       }
@@ -142,23 +173,6 @@ export default function Login() {
       setError(friendlyAuthError(err?.code));
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleResendVerification() {
-    if (!unverifiedEmail || !password) return;
-    setResendStatus("sending");
-    try {
-      // Firebase only lets you send a verification email to a signed-in
-      // user, so we briefly sign back in, send it, then sign out again.
-      const result = await signInWithEmailAndPassword(auth, unverifiedEmail, password);
-      await sendEmailVerification(result.user);
-      await signOut(auth);
-      setResendStatus("sent");
-    } catch (err) {
-      console.error(err);
-      setResendStatus("idle");
-      setError("Couldn't resend the verification email. Try logging in again.");
     }
   }
 
@@ -288,21 +302,6 @@ export default function Login() {
 
           {error && <p className="text-xs text-red-500 pt-1">{error}</p>}
 
-          {unverifiedEmail && (
-            <button
-              type="button"
-              onClick={handleResendVerification}
-              disabled={resendStatus === "sending" || resendStatus === "sent"}
-              className="s2-forgot block"
-            >
-              {resendStatus === "sent"
-                ? "Verification email sent — check your inbox"
-                : resendStatus === "sending"
-                ? "Sending..."
-                : "Resend verification email"}
-            </button>
-          )}
-
           <div className="flex justify-end pt-0.5 pb-0.5">
             <button
               type="button"
@@ -318,7 +317,11 @@ export default function Login() {
           </div>
 
           <button type="submit" disabled={loading} className="s2-login-btn">
-            {loading ? (mode === "signup" ? "Creating account..." : "Signing in...") : mode === "signup" ? "Create account" : "Login"}
+            {checkingDomain
+              ? "Checking email..."
+              : loading
+              ? (mode === "signup" ? "Creating account..." : "Signing in...")
+              : mode === "signup" ? "Create account" : "Login"}
           </button>
 
           <button
@@ -326,8 +329,6 @@ export default function Login() {
             onClick={() => {
               setMode((m) => (m === "login" ? "signup" : "login"));
               setError("");
-              setUnverifiedEmail("");
-              setResendStatus("idle");
             }}
             className="s2-forgot mx-auto block pt-1"
           >

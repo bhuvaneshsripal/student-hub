@@ -10,6 +10,8 @@ import { useCgpaStore } from "./store/cgpaStore";
 import { useProductivityStore } from "./store/productivityStore";
 import { useAttendanceStore } from "./store/attendanceStore";
 import { usePlacementStore } from "./store/placementStore";
+import { useSettingsStore } from "./store/settingsStore";
+import { applyFontScale, applyScreenScale } from "./lib/applyTheme";
 
 
 // Route-level code splitting: each page ships as its own chunk and is only
@@ -79,12 +81,26 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   }, [loading]);
 
   if (loading) return <FullScreenLoader slow={slow} />;
+  // Signup no longer requires clicking an email verification link (the
+  // domain of the email is checked at signup time instead, see Login.tsx),
+  // so a signed-in user here is enough — there's no separate verified state
+  // to wait for.
   if (!user) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 export default function App() {
   const { user } = useAuthUser();
+  const fontScale = useSettingsStore((s) => s.fontScale);
+  const screenScale = useSettingsStore((s) => s.screenScale);
+
+  useEffect(() => {
+    applyFontScale(fontScale);
+  }, [fontScale]);
+
+  useEffect(() => {
+    applyScreenScale(screenScale);
+  }, [screenScale]);
 
   const syncTimetable = useTimetableStore((s) => s.sync);
   const syncCgpa = useCgpaStore((s) => s.sync);

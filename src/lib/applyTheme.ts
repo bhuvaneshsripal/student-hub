@@ -51,3 +51,18 @@ export function applyTheme(mode: 'light' | 'dark') {
   // isn't expressed as a plain variable).
   document.documentElement.classList.toggle('dark', mode === 'dark');
 }
+
+/** Scales the root font-size (percentage of the browser default). Since
+ * Tailwind's spacing and type scale are rem-based, this scales nearly the
+ * entire UI — text, padding, icons sized in rem — proportionally, which is
+ * what the Settings "Font Size" control uses under the hood. */
+export function applyFontScale(percent: number) {
+  document.documentElement.style.fontSize = `${percent}%`;
+}
+
+/** Zooms the whole page in/out, the same way a browser's own zoom control
+ * does — a separate mechanism from Font Size above, so the two controls in
+ * Settings act independently of each other. */
+export function applyScreenScale(percent: number) {
+  (document.documentElement.style as any).zoom = `${percent}%`;
+}

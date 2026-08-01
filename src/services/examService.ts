@@ -73,7 +73,7 @@ function toIsoDate(raw: string): string {
   // usually exports and which the plain `new Date(...)` constructor below
   // gets wrong (it either misreads day/month or returns Invalid Date),
   // which is what was producing "NaN days gap".
-  const dmy = trimmed.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+  const dmy = trimmed.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
   if (dmy) {
     const [, d, m, y] = dmy;
     const day = Number(d);

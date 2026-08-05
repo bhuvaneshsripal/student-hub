@@ -98,6 +98,7 @@ export default function Dashboard() {
   const readiness = usePlacementStore((s) => s.readinessScore());
   const syncAttendance = useAttendanceStore((s) => s.sync);
   const syncPlacement = usePlacementStore((s) => s.sync);
+  const syncCgpa = useCgpaStore((s) => s.sync);
   const push = useToastStore((s) => s.push);
 
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()));
@@ -226,6 +227,7 @@ export default function Dashboard() {
   useEffect(() => {
     syncAttendance();
     syncPlacement();
+    syncCgpa();
 
     syncNotes();
     syncTasks();
